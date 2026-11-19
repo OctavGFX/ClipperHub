@@ -823,7 +823,8 @@ def deliver(clip_dir: Path, s: Settings, log, only: Optional[List[str]] = None,
                 "at": datetime.now(timezone.utc).isoformat()}
     tags = (meta.get("text") or {}).get("hashtags") or []
     res = publish.publish(Path(clip_dir) / "short.mp4", posts, ready, tags=tags,
-                          upload_post_user=s.upload_post_user, log=log)
+                          upload_post_user=s.upload_post_user,
+                          youtube_contains_synthetic_media=s.youtube_altered_content == "yes", log=log)
     res["networks"].update(skipped)
     if skipped and res["status"] == "posted":
         res["status"] = "partial"

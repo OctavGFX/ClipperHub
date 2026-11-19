@@ -112,6 +112,10 @@ def schema() -> Dict[str, Any]:
                "Telegram approval schedules YouTube only.", choices=list(POST_PLATFORMS), default=d.post_platforms),
             _f("youtube_via", "choice", "YouTube posting method", "Set up direct posting under Connect your accounts.",
                choices=list(VIA_API), default=d.youtube_via),
+            _f("youtube_altered_content", "choice", "YouTube: Altered content",
+               "Applies to all future direct YouTube uploads. Choose Yes if they contain material "
+               "that YouTube requires you to disclose.",
+               choices=["no", "yes"], default=d.youtube_altered_content),
             _f("instagram_via", "choice", "Instagram posting method", "Set up direct posting under Connect your accounts.",
                choices=list(VIA_API), default=d.instagram_via),
             _f("others_via", "choice", "TikTok and other networks", "With Telegram, you receive the clip and its caption, then post it yourself.",

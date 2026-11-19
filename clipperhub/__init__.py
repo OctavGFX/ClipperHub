@@ -16,4 +16,4 @@ home PC (2 cores, 8 GB RAM, no usable NVENC):
 - ``service``   ties it together; ``python -m clipperhub run``.
 """
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"

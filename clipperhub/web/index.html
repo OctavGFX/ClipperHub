@@ -941,7 +941,7 @@ const basicFields = {
   style: ["captions", "whisper_model", "hook", "caption_style"],
   music: ["mode"],
   ai: ["provider"],
-  post: ["delivery_mode", "min_gap_minutes", "platforms", "top_n", "top_min_quality", "top_time"],
+  post: ["delivery_mode", "min_gap_minutes", "youtube_altered_content", "platforms", "top_n", "top_min_quality", "top_time"],
 };
 const choiceLabels = {
   platform: {twitch: "Twitch", youtube: "YouTube", kick: "Kick"},
@@ -954,6 +954,7 @@ const choiceLabels = {
   mode: {off: "No music", quiet: "Only when there is little speech", always: "Every clip"},
   delivery_mode: {manual: "Review in ClipperHub", telegram_review: "Review in Telegram", top_daily: "Daily TikTok shortlist", legacy: "Legacy automatic posting"},
   youtube_via: {api: "Direct YouTube upload"}, instagram_via: {api: "Direct Instagram upload"},
+  youtube_altered_content: {no: "No", yes: "Yes"},
   encoder: {auto: "Automatic", qsv: "Intel Quick Sync", x264: "CPU"},
 };
 const routeLabels = {phone: "Send to Telegram (post from your phone)", "upload-post": "Use Upload-Post", off: "Disabled"};
@@ -1013,6 +1014,7 @@ function updateSettingsVisibility() {
   const provider = value("ai.provider"), mode = value("post.delivery_mode");
   for (const key of ["local_url", "local_model", "local_vision_model"]) show("ai." + key, provider === "local");
   show("ai.model", provider === "gemini");
+  show("post.youtube_altered_content", value("post.youtube_via") === "api");
   for (const key of ["top_n", "top_min_quality", "top_time"]) show("post." + key, mode === "top_daily");
   const legacy = mode === "legacy", legacyEnabled = legacy && $('[data-path="post.enabled"]')?.checked;
   show("post.enabled", legacy);

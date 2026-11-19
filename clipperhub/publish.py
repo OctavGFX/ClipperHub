@@ -113,7 +113,8 @@ def youtube_access_token(client_id: str, client_secret: str, refresh_token: str,
 
 
 def youtube_upload(video: Path, title: str, description: str, tags: List[str], *, client_id: str,
-                   client_secret: str, refresh_token: str, session=None) -> dict:
+                   client_secret: str, refresh_token: str, contains_synthetic_media: bool = False,
+                   session=None) -> dict:
     """Upload a Short. Returns {"id", "url", "privacy"}; privacy "private" means Google
     kept it private (an unaudited project), which the caller reports."""
     http = _http(session)
@@ -121,7 +122,8 @@ def youtube_upload(video: Path, title: str, description: str, tags: List[str], *
     size = Path(video).stat().st_size
     meta = {"snippet": {"title": title[:100], "description": description[:4900],
                         "tags": [t for t in tags if t][:15], "categoryId": "20"},
-            "status": {"privacyStatus": "public", "selfDeclaredMadeForKids": False}}
+            "status": {"privacyStatus": "public", "selfDeclaredMadeForKids": False,
+                       "containsSyntheticMedia": contains_synthetic_media}}
     r = http.post(f"{YT_UPLOAD}?uploadType=resumable&part=snippet,status", json=meta, timeout=60,
                   headers={"Authorization": f"Bearer {token}", "X-Upload-Content-Length": str(size),
                            "X-Upload-Content-Type": "video/mp4"})
@@ -466,7 +468,8 @@ def missing(routes: Dict[str, str], creds: dict, upload_post_user: str = "") -> 
 
 
 def publish(video: Path, posts: Dict[str, Dict[str, str]], routes: Dict[str, str], *,
-            tags: List[str], upload_post_user: str = "", log=print, session=None,
+            tags: List[str], upload_post_user: str = "", youtube_contains_synthetic_media: bool = False,
+            log=print, session=None,
             tunnel_factory: Callable = OneFileTunnel) -> dict:
     """Post ``video`` to every routed network; one network failing never stops the others.
 
@@ -488,7 +491,8 @@ def publish(video: Path, posts: Dict[str, Dict[str, str]], routes: Dict[str, str
             if net == "youtube":
                 res = youtube_upload(video, text.get("title", ""), text.get("description", ""), tags,
                                      client_id=creds["yt_id"], client_secret=creds["yt_secret"],
-                                     refresh_token=creds["yt_refresh"], session=session)
+                                     refresh_token=creds["yt_refresh"],
+                                     contains_synthetic_media=youtube_contains_synthetic_media, session=session)
                 if res["privacy"] == "private":
                     results[net] = {"status": "private", "url": res["url"],
                                     "why": "Google keeps API uploads private until the Cloud project "

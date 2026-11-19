@@ -148,6 +148,7 @@ class Settings:
     # how each network is posted: api (free, official) | phone (Telegram handoff) |
     # upload-post (paid service) | off
     youtube_via: str = "api"
+    youtube_altered_content: str = "no"
     instagram_via: str = "api"
     others_via: str = "phone"
     upload_post_user: str = ""
@@ -404,6 +405,10 @@ def from_dict(data: dict, base_dir: Path = Path(".")) -> Settings:
         if v not in allowed:
             raise ConfigError(f"post.{key} must be one of {', '.join(allowed)}")
         setattr(s, key, v)
+    altered_content = p.get("youtube_altered_content", s.youtube_altered_content)
+    if altered_content not in ("no", "yes"):
+        raise ConfigError("post.youtube_altered_content must be 'no' or 'yes'")
+    s.youtube_altered_content = altered_content
     s.min_gap_minutes = _num(p, "min_gap_minutes", s.min_gap_minutes, 0, 1440, int)
     s.daily_cap = _num(p, "daily_cap", s.daily_cap, 1, 200, int)
     s.skip_spoilers = bool(p.get("skip_spoilers", s.skip_spoilers))
