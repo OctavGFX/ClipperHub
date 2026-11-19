@@ -89,6 +89,10 @@ def schema() -> Dict[str, Any]:
             _f("provider", "choice", "AI for scoring and text", "Local AI needs Ollama running with the selected model. "
                "Gemini needs an API key in Accounts & keys. Without AI, ClipperHub uses templates instead.",
                choices=["local", "gemini", "off"], default=d.ai_provider),
+            _f("director_enabled", "bool", "AI Director", "Use local Ollama to plan cuts and layouts. Falls back to classic clipping if no usable edit is found.", default=d.director_enabled),
+            _f("director_mode", "choice", "Director intervention", choices=["adaptive", "cuts"], default=d.director_mode),
+            _f("director_context", "float", "Extra context before and after (seconds)", min=0, max=60, default=d.director_context),
+            _f("director_target", "float", "Target edit length (seconds)", min=5, max=180, default=d.director_target),
             _f("local_url", "text", "Local OpenAI-compatible base URL", default=d.local_url),
             _f("local_model", "text", "Local model name", "Use the exact model name installed in Ollama or your local server.",
                default=d.local_model),

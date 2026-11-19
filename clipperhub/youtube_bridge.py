@@ -1,4 +1,4 @@
-"""Streamlink command bridge: YouTube via yt-dlp/Firefox, other platforms via Streamlink."""
+"""Streamlink command bridge: YouTube via yt-dlp, other platforms via Streamlink."""
 from __future__ import annotations
 import json
 import os
@@ -21,7 +21,6 @@ def youtube_url(argv):
 def extract(url):
     command = [
         sys.executable, "-m", "yt_dlp",
-        "--cookies-from-browser", "firefox",
         "--no-live-from-start", "--no-playlist",
         "--dump-single-json", url,
     ]
@@ -45,16 +44,19 @@ def extract(url):
         raise RuntimeError("yt-dlp CLI returned no video formats")
     return data
 
+def audio_format(info):
+    formats = [f for f in info.get('formats') or []
+               if f.get('url') and 'm3u8' in (f.get('protocol') or '').lower()
+               and f.get('vcodec') == 'none' and f.get('acodec') != 'none']
+    return max(formats, key=lambda f: (f.get('abr') or f.get('tbr') or 0), default=None)
+
+
 def candidates(info):
-    out = []
-    for f in info.get('formats') or []:
-        codec_v = f.get('vcodec') or 'none'
-        codec_a = f.get('acodec') or 'none'
-        proto = (f.get('protocol') or '').lower()
-        if (f.get('url') and 'm3u8' in proto and
-                codec_v != 'none' and codec_a != 'none'):
-            out.append(f)
-    return out
+    formats = [f for f in info.get('formats') or []
+               if f.get('url') and 'm3u8' in (f.get('protocol') or '').lower()
+               and (f.get('vcodec') or 'none') != 'none']
+    muxed = [f for f in formats if (f.get('acodec') or 'none') != 'none']
+    return muxed or (formats if audio_format(info) else [])
 
 
 def best_format(info, argv):
@@ -78,6 +80,25 @@ def best_format(info, argv):
     ))
 
 
+def stream_command(info, fmt):
+    ffmpeg = os.environ.get('FFMPEG_BIN') or shutil.which('ffmpeg') or 'ffmpeg'
+    audio = audio_format(info) if (fmt.get('acodec') or 'none') == 'none' else None
+    command = [ffmpeg, '-hide_banner', '-loglevel', 'warning', '-nostdin']
+    for selected in ([fmt, audio] if audio else [fmt]):
+        headers = selected.get('http_headers') or info.get('http_headers') or {}
+        ua = headers.get('User-Agent') or headers.get('user-agent')
+        if ua:
+            command.extend(['-user_agent', str(ua)])
+        extra_headers = ''.join(f'{k}: {v}\r\n' for k, v in headers.items()
+                                if k.lower() not in ('user-agent', 'cookie'))
+        if extra_headers:
+            command.extend(['-headers', extra_headers])
+        command.extend(['-i', selected['url']])
+    command.extend(['-map', '0:v:0', '-map', '1:a:0' if audio else '0:a:0?',
+                    '-c', 'copy', '-f', 'mpegts', 'pipe:1'])
+    return command
+
+
 def main():
     args = sys.argv[1:]
     url = youtube_url(args)
@@ -97,7 +118,7 @@ def main():
                     'author': info.get('uploader') or info.get('channel') or '',
                     'category': info.get('categories', [''])[0] if info.get('categories') else '',
                 },
-                'error': '' if (live and fmt) else ('live stream has no muxed HLS audio+video format' if live else 'not live'),
+                'error': '' if (live and fmt) else ('live stream has no usable HLS video and audio formats' if live else 'not live'),
             }
             print(json.dumps(data, ensure_ascii=True))
             return 0
@@ -107,20 +128,8 @@ def main():
         if not live or fmt is None:
             print('YouTube: no usable live HLS audio+video format', file=sys.stderr)
             return 2
-        ffmpeg = os.environ.get('FFMPEG_BIN') or shutil.which('ffmpeg') or 'ffmpeg'
-        headers = fmt.get('http_headers') or info.get('http_headers') or {}
-        command = [ffmpeg, '-hide_banner', '-loglevel', 'warning', '-nostdin']
-        ua = headers.get('User-Agent') or headers.get('user-agent')
-        if ua:
-            command.extend(['-user_agent', str(ua)])
-        extra_headers = ''.join(f'{k}: {v}\r\n' for k, v in headers.items()
-                                if k.lower() not in ('user-agent', 'cookie'))
-        if extra_headers:
-            command.extend(['-headers', extra_headers])
-        command.extend(['-i', fmt['url'], '-map', '0:v:0', '-map', '0:a:0?',
-                        '-c', 'copy', '-f', 'mpegts', 'pipe:1'])
         # stdout stays binary: ClipperHub's ffmpeg consumes the MPEG-TS pipe.
-        return subprocess.call(command, stdout=sys.stdout.buffer, stderr=sys.stderr)
+        return subprocess.call(stream_command(info, fmt), stdout=sys.stdout.buffer, stderr=sys.stderr)
     except Exception as exc:
         if '--json' in args:
             print(json.dumps({'streams': {}, 'metadata': {}, 'error': str(exc)}))

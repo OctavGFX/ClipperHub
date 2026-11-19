@@ -180,6 +180,15 @@ def cmd_replay(args):
         print(r.get("file") or f"failed at {r['at']:.0f}s: {r.get('error')}")
 
 
+def cmd_rerender(args):
+    from . import director
+    settings = _load(args)
+    try:
+        print(director.rerender(settings, Path(args.clip_dir), Path(args.out)))
+    except (ValueError, KeyError, TypeError, OSError, render.RenderError) as exc:
+        sys.exit(f"edit render failed: {exc}")
+
+
 def cmd_post(args):
     from .service import Logger, deliver, write_meta
     s = _load(args)
@@ -262,6 +271,11 @@ def main(argv=None):
     g.add_argument("--post", action="store_true", help="post the clips (overrides the config)")
     g.add_argument("--no-post", action="store_true", help="never post (overrides the config)")
     rp.set_defaults(fn=cmd_replay)
+
+    edit = sub.add_parser("rerender", help="render a saved AI Director plan to a new file")
+    edit.add_argument("clip_dir")
+    edit.add_argument("--out", required=True)
+    edit.set_defaults(fn=cmd_rerender)
 
     po = sub.add_parser("post", help="post a held clip")
     po.add_argument("clip_dir")

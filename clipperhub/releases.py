@@ -20,12 +20,13 @@ MAX_PATCH = 16 * 1024 * 1024
 _TAG = re.compile(r"v?(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})")
 _DIGEST = re.compile(r"sha256:[a-f0-9]{64}")
 MODULES = """
-__init__ __main__ captions chat config delivery_queue detector facecam local_ai music
+__init__ __main__ captions chat config delivery_queue detector director facecam local_ai music
 poster procs publish quality_video recorder releases render replay service settings_schema
 tomlwrite transcribe video_watch viral webui youtube_bridge
 """.split()
 RUNTIME_FILES = frozenset(f"clipperhub/{name}.py" for name in MODULES) | {
     "clipperhub/web/index.html", "fonts/Montserrat-ExtraBold.ttf", "fonts/Montserrat-OFL.txt",
+    "ssrf_guard.py", "security_utils.py",
 }
 ARCHIVE_FILES = RUNTIME_FILES | {
     ".gitignore", "LICENSE", "ClipperHub.bat", "clipperhub.example.toml", "requirements.txt",
@@ -58,7 +59,7 @@ def check_latest() -> dict:
     number = ".".join(version.groups())
     assets = release.get("assets")
     asset = next((a for a in assets if isinstance(a, dict)
-                  and a.get("name") == f"ClipperHub-v{number}.zip"), {}) if isinstance(assets, list) else {}
+                  and a.get("name") == f"ClipperHub-Windows-v{number}.zip"), {}) if isinstance(assets, list) else {}
     digest, size = asset.get("digest"), asset.get("size")
     patch = ({"tag": tag, "digest": digest[7:], "size": size}
              if isinstance(digest, str) and _DIGEST.fullmatch(digest)
@@ -70,7 +71,7 @@ def check_latest() -> dict:
 
 def download_update(latest: dict) -> dict[str, bytes]:
     patch = latest["patch"]
-    url = f'https://github.com/{REPOSITORY}/releases/download/{patch["tag"]}/ClipperHub-v{latest["version"]}.zip'
+    url = f'https://github.com/{REPOSITORY}/releases/download/{patch["tag"]}/ClipperHub-Windows-v{latest["version"]}.zip'
     try:
         with urlopen(Request(url, headers={"User-Agent": "ClipperHub"}), timeout=15) as response:
             data = response.read(patch["size"] + 1)

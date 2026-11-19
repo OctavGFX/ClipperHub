@@ -27,6 +27,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from . import captions, local_ai, music, poster, procs, publish, render, transcribe, viral, quality_video
+from . import director
 from .chat import TwitchChatReader, YouTubeChatReader
 from .config import Channel, Settings, matches_game
 from .detector import Peak, PeakDetector
@@ -143,6 +144,7 @@ class ClipJob:
     desc_style: str = "normal"
     moment: Optional[float] = None   # seconds into the clip where the peak is
     source_type: str = "live"
+    classic_range: Optional[Tuple[float, float]] = None
     source_url: str = ""
     source_offset: Optional[float] = None
     facecam: Optional[SourceFacecam] = None
@@ -506,13 +508,17 @@ class Service:
         end = peak.ts + s.post_seconds
         if end - start < s.min_seconds:
             end = start + s.min_seconds
+        classic = None
+        if s.director_enabled and s.ai_provider == "local":
+            classic = (start, end)
+            start, end = director.window(start, end, s)
         self.clip_counter += 1
         style = s.style_for(w.channel, self.clip_counter)
         stamp = datetime.fromtimestamp(peak.ts).strftime("%Y%m%d-%H%M%S")
         job_dir = s.data_dir / "clips" / w.channel.key.replace(":", "_") / stamp
         job = ClipJob(w.channel, peak, start, end, w.info, style, job_dir,
                       desc_style=s.description_for(self.clip_counter), moment=peak.ts - start,
-                      facecam=w.facecam, automatic=True)
+                      facecam=w.facecam, automatic=True, classic_range=classic)
         w.pending.append(job)
         self.counts["peaks"] += 1
         self.log(f"{w.channel.key}: PEAK score {peak.score} ({peak.reason}) "
@@ -526,7 +532,7 @@ class Service:
             if self.discard_waiting.is_set():
                 break
             ready = w.buffer.latest_end >= job.end + 0.5
-            waited = now - job.created > self.settings.post_seconds + 60
+            waited = now - job.created > max(self.settings.post_seconds, job.end - job.peak.ts) + 60
             if not (ready or force or waited):
                 keep.append(job)
                 continue
@@ -540,6 +546,9 @@ class Service:
                 self.log(f"{w.channel.key}: {e}")
                 continue
             job.raw_offset, job.duration = offset, real
+            if job.classic_range:
+                job.start = segs[0].start + offset
+                job.moment = max(0.0, min(real, job.peak.ts - job.start))
             with self._jobs_lock:
                 if not self.discard_waiting.is_set():
                     self.jobs.put(job)
@@ -642,7 +651,7 @@ class Service:
         self.log(f"   editorial review: {quality_review['status']} "
                  f"({quality_review.get('reason', 'ok')[:130]})")
         box = job.channel.facecam
-        if job.facecam is not None:
+        if box is None and job.facecam is not None:
             parts = (.10, .50, .90, .30, .70, .97) if job.source_type == "video" else (.15, .45, .80, .30, .65, .92)
             samples = [(job.raw, job.raw_offset + job.duration * part)
                        for part in parts]
@@ -658,11 +667,44 @@ class Service:
             if mix is None:
                 self.log(f"{who}: music is on but the library is empty ({s.music_dir})")
         self.current_step = f"{who}: rendering the Short"
-        out = render.render_short(job.raw, d / "short.mp4", job.raw_offset, job.duration,
-                                  layout=layout, facecam=box,
-                                  ass_path=ass if (s.captions or s.hook) else None,
-                                  fps=s.fps, encoder=s.encoder, music=mix)
-        if not s.keep_raw_clips:
+        plan = None
+        destination = d / "short.mp4"
+        edited_duration = job.duration
+        if s.director_enabled and s.ai_provider == "local" and job.classic_range:
+            try:
+                visual = render.extract_frames(job.raw, [job.raw_offset + job.duration * x
+                                               for x in (.12, .36, .64, .88)], width=288) if s.local_vision_model else []
+                segments = director.make_plan(s, job, words, quality_review, box, visual)
+                out = render.render_edit(job.raw, destination, job.raw_offset, segments, words, text.hook,
+                                         facecam=box, style=job.style, settings=s, mix=mix)
+                edited_duration = sum(row["end"] - row["start"] for row in segments)
+                plan = {"version": 1, "segments": segments, "raw": job.raw.name, "offset": job.raw_offset,
+                        "words": [vars(word) for word in words], "hook": text.hook, "style": job.style,
+                        "facecam": box, "fps": s.fps, "captions": s.captions, "show_hook": s.hook,
+                        "music": vars(mix) | {"path": mix.path.name} if mix else None}
+                (d / "edit-plan.json").write_text(json.dumps(plan, ensure_ascii=False), encoding="utf-8")
+            except (director.EditorialError, render.RenderError, OSError, subprocess.TimeoutExpired) as exc:
+                plan = None
+                self.log(f"{who}: AI Director fallback: {exc}")
+        if plan is None:
+            begin, length = 0.0, job.duration
+            if job.classic_range:
+                a, b = job.classic_range
+                begin = max(0.0, a - job.start)
+                length = min(job.duration - begin, b - job.start - begin)
+                if length < s.min_seconds:
+                    begin, length = 0.0, min(job.duration, s.max_seconds)
+            if begin or length != job.duration:
+                from dataclasses import replace
+                timed = [replace(w, start=max(0, w.start - begin), end=min(length, w.end - begin))
+                         for w in words if w.start < begin + length and w.end > begin]
+                ass.write_text(captions.build_ass(timed, text.hook, length, job.style, layout,
+                                                 s.captions, s.hook), encoding="utf-8")
+            out = render.render_short(job.raw, destination, job.raw_offset + begin, length, layout=layout,
+                                      facecam=box, ass_path=ass if (s.captions or s.hook) else None,
+                                      fps=s.fps, encoder=s.encoder, music=mix)
+            edited_duration = length
+        if not s.keep_raw_clips and not plan and job.source_type != "local":
             job.raw.unlink(missing_ok=True)
         manual_video = job.source_type == "video" and not job.automatic
         rated_automatic = (job.automatic and quality_review.get("status") == "ok"
@@ -678,7 +720,8 @@ class Service:
             "source_type": job.source_type, "source_offset": job.source_offset,
             "facecam": box,
             "moment": datetime.fromtimestamp(job.peak.ts, timezone.utc).isoformat(),
-            "duration": round(job.duration, 1), "score": job.peak.score, "reason": job.peak.reason,
+            "duration": round(edited_duration, 1), "score": job.peak.score, "reason": job.peak.reason,
+            **({"edit_plan": plan["segments"]} if plan else {}),
             "chat": job.peak.messages, "category": job.info.category,
             "chat_counts": job.peak.chat_counts,
             "stream_title": job.info.title, "language": lang,

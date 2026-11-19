@@ -32,7 +32,7 @@ from pathlib import Path
 from typing import Callable, List, Optional, Tuple
 from urllib.parse import parse_qs, urlparse
 
-from . import procs
+from . import director, procs
 from .chat import ChatMessage, parse_youtube_replay_line
 from .config import Channel, Settings
 from .detector import Peak, PeakDetector
@@ -534,6 +534,10 @@ class Replay:
                 clip_end = min(dur, clip_start + min(s.max_seconds, s.pre_seconds + s.post_seconds))
                 if clip_end - clip_start < s.min_seconds:
                     clip_start = max(0.0, clip_end - s.min_seconds)
+            classic = None
+            if self.interval is None and s.director_enabled and s.ai_provider == "local":
+                classic = clip_start, clip_end
+                clip_start, clip_end = director.window(clip_start, clip_end, s, dur)
             a, b = max(0.0, clip_start - MARGIN), min(dur, clip_end + MARGIN)
             self.step = f"clip {i}/{len(peaks)}: downloading {_mmss(clip_start)}-{_mmss(clip_end)}"
             self.log(f"replay: {self.step}")
@@ -559,7 +563,7 @@ class Replay:
                           source_type="video" if self.video_import else "replay",
                           source_url=self.url, source_offset=clip_start,
                           facecam=SourceFacecam(reject_moved=True) if self.video_import else None,
-                          automatic=self.upload_only)
+                          automatic=self.upload_only, classic_range=classic)
             job.raw, job.raw_offset, job.duration = raw, clip_start - a, clip_end - clip_start
             self.step = f"clip {i}/{len(peaks)}: making the Short"
             try:

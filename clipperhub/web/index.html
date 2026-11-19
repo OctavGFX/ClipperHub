@@ -940,7 +940,7 @@ $("#settingsTabs").addEventListener("keydown", e => {
 const basicFields = {
   style: ["captions", "whisper_model", "hook", "caption_style"],
   music: ["mode"],
-  ai: ["provider"],
+  ai: ["provider", "director_enabled", "director_mode", "director_context", "director_target"],
   post: ["delivery_mode", "min_gap_minutes", "youtube_altered_content", "platforms", "top_n", "top_min_quality", "top_time"],
 };
 const choiceLabels = {
@@ -951,6 +951,7 @@ const choiceLabels = {
     medium: "Medium (slower)", "tiny.en": "Tiny (English only)", "base.en": "Base (English only)",
     "small.en": "Small (English only)", "large-v3-turbo": "Large v3 Turbo (more resources)"},
   provider: {local: "Local AI (Ollama)", gemini: "Google Gemini (API key)", off: "No AI (templates only)"},
+  director_mode: {adaptive: "Cuts and dynamic layouts", cuts: "Cuts only"},
   mode: {off: "No music", quiet: "Only when there is little speech", always: "Every clip"},
   delivery_mode: {manual: "Review in ClipperHub", telegram_review: "Review in Telegram", top_daily: "Daily TikTok shortlist", legacy: "Legacy automatic posting"},
   youtube_via: {api: "Direct YouTube upload"}, instagram_via: {api: "Direct Instagram upload"},
@@ -1014,6 +1015,10 @@ function updateSettingsVisibility() {
   const provider = value("ai.provider"), mode = value("post.delivery_mode");
   for (const key of ["local_url", "local_model", "local_vision_model"]) show("ai." + key, provider === "local");
   show("ai.model", provider === "gemini");
+  show("ai.director_enabled", provider === "local");
+  for (const key of ["director_mode", "director_context", "director_target"]) {
+    show("ai." + key, provider === "local" && $('[data-path="ai.director_enabled"]')?.checked);
+  }
   show("post.youtube_altered_content", value("post.youtube_via") === "api");
   for (const key of ["top_n", "top_min_quality", "top_time"]) show("post." + key, mode === "top_daily");
   const legacy = mode === "legacy", legacyEnabled = legacy && $('[data-path="post.enabled"]')?.checked;

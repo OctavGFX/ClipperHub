@@ -19,6 +19,7 @@ HOLD = 0.6  # seconds a caption stays up after its last word
 
 # (hook centre y, caption centre y) per layout
 LAYOUT_BANDS = {"blur": (330, 1560), "facecam": (690, 1480), "fill": (300, 1500)}
+LAYOUT_BANDS.update(gameplay=(370, 1520), balanced=(960, 1510), reaction=(1200, 1530), story=(850, 1530))
 
 
 @dataclass(frozen=True)

@@ -139,6 +139,10 @@ class Settings:
     # ai
     ai_model: str = "gemini-3.1-flash-lite"
     ai_provider: str = "local"
+    director_enabled: bool = False
+    director_context: float = 20
+    director_target: float = 40
+    director_mode: str = "adaptive"
     local_url: str = "http://127.0.0.1:11434/v1"
     local_model: str = ""
     local_vision_model: str = ""
@@ -379,6 +383,14 @@ def from_dict(data: dict, base_dir: Path = Path(".")) -> Settings:
     s.ai_provider = str(ai.get("provider", "gemini" if p.get("enabled") or ai.get("model") else s.ai_provider))
     if s.ai_provider not in ("local", "gemini", "off"):
         raise ConfigError("ai.provider must be local, gemini or off")
+    s.director_enabled = ai.get("director_enabled", s.director_enabled)
+    if type(s.director_enabled) is not bool:
+        raise ConfigError("ai.director_enabled must be a boolean")
+    s.director_context = _num(ai, "director_context", s.director_context, 0, 60)
+    s.director_target = _num(ai, "director_target", s.director_target, 5, 180)
+    s.director_mode = ai.get("director_mode", s.director_mode)
+    if s.director_mode not in ("adaptive", "cuts"):
+        raise ConfigError("ai.director_mode must be adaptive or cuts")
     s.local_url = str(ai.get("local_url", s.local_url)).strip().rstrip("/")
     s.local_model = str(ai.get("local_model", s.local_model)).strip()
     s.local_vision_model = str(ai.get("local_vision_model", s.local_vision_model)).strip()
