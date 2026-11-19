@@ -1,0 +1,5 @@
+requests
+streamlink
+yt-dlp[default]
+faster-whisper
+tomli; python_version < '3.11'

@@ -1,0 +1,1254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ClipperHub</title>
+<style>
+:root{--bg:#0e1013;--panel:#161a1f;--panel2:#1d2229;--line:#2a3038;--text:#e6e9ee;--muted:#8b94a1;
+--accent:#7c5cff;--accent2:#a48bff;--green:#2fbf71;--red:#ef5350;--amber:#f2b134;--blue:#4aa3ff;--radius:10px}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--text);
+font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+a{color:var(--accent2)}button,input,select,textarea{font:inherit;color:inherit}
+header{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:14px;padding:10px 20px;
+background:rgba(14,16,19,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.logo{font-weight:800;letter-spacing:.3px;font-size:17px;line-height:1.15;flex-shrink:0}.logo .brand-accent{color:var(--accent2)}
+.logo-version{display:block;color:var(--muted);font-size:11px;font-weight:500;letter-spacing:0;margin-top:3px}
+.logo-version a:not([hidden]){display:inline-block;padding:3px 6px;border:1px solid var(--amber);
+  border-radius:5px;color:var(--amber);background:var(--panel2);font-weight:700}
+.logo-version a:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+nav{display:flex;gap:4px;margin-left:10px;flex-wrap:wrap}
+nav button{background:none;border:0;padding:7px 12px;border-radius:8px;color:var(--muted);cursor:pointer}
+nav button.on{background:var(--panel2);color:var(--text)}nav button:hover{color:var(--text)}
+.extras{position:relative}.extras summary{padding:7px 12px;cursor:pointer;color:var(--muted)}
+.extras-menu{position:absolute;top:100%;right:0;min-width:140px;padding:4px;background:var(--panel);border:1px solid var(--line);border-radius:8px}
+.extras-menu button{display:block;width:100%;text-align:left}
+.watch-controls:not([hidden]){display:flex;gap:8px;align-items:center}
+.grow{flex:1}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;font-size:12px;
+background:var(--panel2);border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.pill.ok{color:var(--green);border-color:#1f5b3c}.pill.bad{color:var(--red);border-color:#6b2b2a}
+.pill.warn{color:var(--amber);border-color:#6a5220}.pill.live{color:#fff;background:#c62828;border-color:#c62828}
+.dot{width:8px;height:8px;border-radius:50%;background:currentColor;display:inline-block}
+.btn{border:1px solid var(--line);background:var(--panel2);padding:7px 14px;border-radius:8px;cursor:pointer}
+.btn:hover{border-color:#3a424d}.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:#6a49f5}.btn.danger{color:var(--red)}.btn.green{background:var(--green);border-color:var(--green);color:#06210f;font-weight:600}
+.btn:disabled{opacity:.45;cursor:not-allowed}.btn.sm{padding:4px 10px;font-size:12px}
+main{padding:20px;max-width:1400px;margin:0 auto}
+.tab{display:none}.tab.on{display:block}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.grid{display:grid;gap:14px}.g2{grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}
+.g3{grid-template-columns:repeat(auto-fill,minmax(270px,1fr))}
+h2{font-size:15px;margin:0 0 12px}h3{font-size:13px;margin:0 0 8px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.6px}
+.muted{color:var(--muted)}.small{font-size:12px}.mono{font-family:ui-monospace,Consolas,monospace}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px}
+.stat b{display:block;font-size:24px}.stat span{color:var(--muted);font-size:12px}
+.banner{border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;border:1px solid}
+.banner.bad{background:#2a1515;border-color:#6b2b2a}.banner.info{background:#18162a;border-color:#3c3370}
+.chan .top{display:flex;align-items:center;gap:8px;margin-bottom:6px}.chan .name{font-weight:700;font-size:15px}
+.plat{font-size:11px;padding:2px 7px;border-radius:5px;font-weight:700;text-transform:uppercase}
+.plat.twitch{background:#2b1d4a;color:#b9a3ff}.plat.kick{background:#14361f;color:#53fc18}.plat.youtube{background:#3a1515;color:#ff6b6b}
+.chan canvas{width:100%;height:70px;display:block;margin-top:8px;background:var(--panel2);border-radius:8px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;font-size:12px;margin-top:6px}.kv span:nth-child(odd){color:var(--muted)}
+.bar{height:6px;background:var(--panel2);border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--accent)}
+.log{background:#0a0c0f;border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;height:calc(100vh - 210px);
+overflow:auto;font:12px/1.5 ui-monospace,Consolas,monospace;white-space:pre-wrap;word-break:break-word}
+.log .peak{color:var(--amber)}.log .ready{color:var(--green)}.log .err{color:var(--red)}.log .live{color:#ff8a80}
+.minilog{height:220px}
+.clip video{width:100%;aspect-ratio:9/16;background:#000;border-radius:8px;display:block}
+.scheduled{display:grid;grid-template-columns:110px minmax(0,1fr);gap:14px}
+.scheduled video{width:100%;aspect-ratio:9/16;background:#000;border-radius:8px}
+.schedule-copy{white-space:pre-wrap;overflow-wrap:anywhere}
+.clip .hook{font-weight:700;margin:10px 0 4px}.clip .title{color:var(--muted);font-size:12px;margin-bottom:8px}
+.chips{display:flex;gap:5px;flex-wrap:wrap;margin:6px 0}
+.chip{font-size:11px;padding:2px 7px;border-radius:5px;background:var(--panel2);color:var(--muted);border:1px solid var(--line)}
+.chip.posted{color:var(--green);border-color:#1f5b3c}.chip.held{color:var(--amber);border-color:#6a5220}.chip.failed{color:var(--red);border-color:#6b2b2a}
+label.f{display:block;margin-bottom:14px}label.f>b{display:block;font-weight:600;margin-bottom:4px}
+label.f>.help,.checks-group>.help{display:block;color:var(--muted);font-size:12px;margin-top:4px}
+input[type=text],input[type=number],input[type=password],input[type=url],select,textarea{width:100%;background:var(--panel2);
+border:1px solid var(--line);border-radius:8px;padding:8px 10px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:vertical;min-height:70px}
+.toggle{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+.toggle input{width:36px;height:20px;appearance:none;background:var(--line);border-radius:99px;position:relative;cursor:pointer;transition:.15s}
+.toggle input:checked{background:var(--accent)}
+.toggle input::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.15s}
+.toggle input:checked::after{left:18px}
+.checks{display:flex;gap:12px;flex-wrap:wrap}.checks label{display:inline-flex;gap:5px;align-items:center}
+.chanrow{border:1px solid var(--line);border-radius:var(--radius);padding:12px;margin-bottom:10px;background:var(--panel2)}
+.chanrow .grid{grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.chanrow label.f{margin-bottom:0}
+.fc{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.settings-menu{display:grid;grid-template-columns:175px minmax(0,1fr);gap:14px;max-width:1080px}
+.settings-tabs{display:grid;gap:3px;align-content:start;align-self:start;position:sticky;top:calc(var(--settings-toolbar-bottom, 120px) + 10px);padding:6px;margin:0;scroll-margin-top:calc(var(--settings-toolbar-bottom, 120px) + 10px)}
+.settings-tabs button{text-align:left;padding:9px 10px;border:0;border-left:3px solid transparent;border-radius:5px;background:none;color:var(--muted);cursor:pointer}
+.settings-tabs button:hover{background:var(--panel2);color:var(--text)}
+.settings-tabs button[aria-selected=true]{border-left-color:var(--accent);background:var(--panel2);color:var(--text);font-weight:600}
+.settings-pane{min-width:0;padding:14px 16px}
+.settings-pane h2{margin-bottom:4px}
+.settings-pane p{margin:4px 0 10px}
+#settingsFields [hidden]{display:none}
+#settingsFields :is(input,select,button,summary){scroll-margin-top:calc(var(--settings-toolbar-bottom, 120px) + 10px)}
+.settings-pane .fields>label.f{display:grid;grid-template-columns:minmax(0,1fr) minmax(125px,36%);gap:2px 16px;
+  align-items:center;border-top:1px solid var(--line);margin:0;padding:8px 0}
+.settings-pane .fields>label.f>b,.settings-pane .fields>label.f>.help{grid-column:1;margin:0}
+.settings-pane .fields>label.f>:nth-child(2){grid-column:2;grid-row:1/span 2;justify-self:start}
+.settings-pane :is(input[type=text],input[type=number],input[type=password],select){padding:5px 8px;min-width:0}
+.settings-pane .fields .checks-group{border-top:1px solid var(--line);padding-top:4px;margin:8px 0}
+.settings-pane .group-title{margin:12px 0 5px}
+.settings-pane details{margin:6px 0}
+.settings-pane summary{cursor:pointer}
+.settings-pane .advanced-group{padding:7px 10px;border:1px solid var(--line);border-radius:7px}
+.settings-pane .advanced-group>summary,.channel-options>summary{font-weight:600}
+.advanced-group .fields{margin-top:7px}
+.settings-pane .chanrow{padding:8px 10px;margin-bottom:6px}
+.settings-pane .chanrow .grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,125px),1fr));gap:6px 10px}
+.channel-options .grid{margin-top:6px}
+.settings-pane .net{padding:8px 10px;margin:6px 0}
+.settings-pane .net .row{justify-content:flex-start}
+@media(max-width:720px){
+  .settings-menu{grid-template-columns:minmax(0,1fr)}
+  .settings-tabs{position:static;display:flex;flex-wrap:wrap}
+  .settings-tabs button{padding:6px 8px}
+}
+@media(max-width:440px){
+  .settings-pane .fields>label.f{grid-template-columns:minmax(0,1fr)}
+  .settings-pane .fields>label.f>:nth-child(2){grid-column:1;grid-row:auto}
+}
+.checks-group{border:0;padding:0;min-width:0;margin:0 0 14px}
+.checks-group legend{padding:0;font-weight:600;margin-bottom:4px}
+#settingsToolbar{position:sticky;top:var(--dashboard-header-height, 55px);z-index:4;background:var(--bg);
+  border-bottom:1px solid var(--line);padding:8px 0;margin-bottom:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;max-width:1080px}
+dialog{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:14px;padding:0;width:min(760px,95vw);max-height:90vh}
+dialog::backdrop{background:rgba(0,0,0,.6)}
+.dlg-h{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center}
+.dlg-b{padding:16px 18px;overflow:auto;max-height:calc(90vh - 130px)}.dlg-f{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end}
+.net{border:1px solid var(--line);border-radius:10px;padding:10px;margin-bottom:10px}
+.net .row{justify-content:space-between}
+.track{display:grid;grid-template-columns:1fr 260px auto auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.track audio{width:100%;height:32px}
+.drop{border:2px dashed var(--line);border-radius:var(--radius);padding:26px;text-align:center;color:var(--muted);cursor:pointer}
+.drop.over{border-color:var(--accent);color:var(--text)}
+.toast{position:fixed;right:20px;bottom:20px;z-index:20;display:flex;flex-direction:column;gap:8px}
+.toast div{background:var(--panel2);border:1px solid var(--line);border-left:4px solid var(--accent);padding:10px 14px;border-radius:8px;max-width:420px;box-shadow:0 6px 24px rgba(0,0,0,.4)}
+.toast div.bad{border-left-color:var(--red)}.toast div.ok{border-left-color:var(--green)}
+.empty{color:var(--muted);text-align:center;padding:40px}
+@media (max-width:800px){.stats{grid-template-columns:repeat(2,1fr)}.track{grid-template-columns:1fr}
+  header{flex-wrap:wrap;gap:8px;padding:8px 12px}nav{order:3;width:100%;margin:0;flex-wrap:nowrap;overflow-x:auto}
+  nav button{white-space:nowrap}.btn{white-space:nowrap}
+  .extras-menu{position:fixed;top:auto;right:12px;z-index:6}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Clipper<span class="brand-accent">Hub</span>
+    <small class="logo-version"><span id="appVersion"></span>
+      <a id="appUpdate" target="_blank" rel="noopener noreferrer" hidden></a></small>
+  </div>
+  <nav id="nav">
+    <button data-tab="dash" class="on">Streaming Dashboard</button>
+    <button data-tab="video">Video Dashboard</button>
+    <button data-tab="clips">Clips</button>
+    <button data-tab="schedule">Schedule</button>
+    <details class="extras" id="extras"><summary>Extras</summary><div class="extras-menu">
+      <button data-tab="replay">Replay test</button><button data-tab="music">Music</button><button data-tab="log">Log</button>
+    </div></details>
+    <button data-tab="settings">Settings</button>
+  </nav>
+  <div class="grow"></div>
+  <div id="streamControls" class="watch-controls">
+    <span id="runpill" class="pill"><i class="dot"></i> stopped</span>
+    <button class="btn" id="checkBtn" title="Ask every channel whether it is live now">Check now</button>
+    <button class="btn green" id="startBtn">Start</button>
+    <button class="btn danger" id="stopBtn" style="display:none">Stop</button>
+    <button class="btn danger" id="clearQueueBtn" hidden>Clear queue</button>
+  </div>
+  <div id="videoControls" class="watch-controls" role="group" aria-label="YouTube upload watcher controls" hidden>
+    <span class="pill" id="vwState"><i class="dot"></i> <span id="vwStateText">Stopped</span></span>
+    <button class="btn" id="vwCheck" title="Check selected YouTube channels for new uploads now" disabled>Check now</button>
+    <button class="btn green" id="vwStart" title="Start the YouTube upload watcher" disabled>Start</button>
+    <button class="btn danger" id="vwStop" title="Stop the YouTube upload watcher" hidden>Stop</button>
+  </div>
+</header>
+
+<main>
+<!-- DASHBOARD -->
+<section class="tab on" id="tab-dash">
+  <div id="dashBanner"></div>
+  <div class="row" id="chips"></div>
+  <div class="stats">
+    <div class="stat"><b id="cPeaks">0</b><span>peaks found</span></div>
+    <div class="stat"><b id="cClips">0</b><span>Shorts made</span></div>
+    <div class="stat"><b id="cPosted">0</b><span>posted / scheduled</span></div>
+    <div class="stat"><b id="cQueue">0</b><span>in the queue</span></div>
+  </div>
+  <div class="card" id="stepCard" style="display:none;margin-bottom:14px"><span class="muted">Working on:</span> <b id="step"></b></div>
+  <h3>Channels</h3>
+  <div class="grid g2" id="chans"></div>
+  <h3 style="margin-top:22px">Latest activity</h3>
+  <div class="log minilog" id="miniLog"></div>
+</section>
+
+<!-- REPLAY -->
+<section class="tab" id="tab-replay">
+  <div class="grid g2">
+    <div class="card">
+      <h2>Test on an ended stream (YouTube or Twitch)</h2>
+      <p class="muted small" style="margin-top:-6px">Finds the best moments in the window you choose, downloads only the
+        seconds around each one and makes the Shorts with your current settings. Moments come from the
+        <b>chat replay</b> when a YouTube stream kept one, otherwise from <b>loudness</b> (only the audio of the window is
+        downloaded). Twitch VODs also use the <b>clips viewers made</b> when your Twitch keys are set (Settings &gt; API keys).</p>
+      <label class="f"><b>Stream link</b><input type="url" id="rpUrl" placeholder="https://www.youtube.com/watch?v=...  or  https://www.twitch.tv/videos/..."></label>
+      <div class="grid" style="grid-template-columns:repeat(3,1fr);gap:10px">
+        <label class="f"><b>Start at minute</b><input type="number" id="rpStart" value="0" min="0"></label>
+        <label class="f"><b>Minutes to analyse</b><input type="number" id="rpMin" value="30" min="1" max="600"></label>
+        <label class="f"><b>Max Shorts</b><input type="number" id="rpMax" value="3" min="1" max="20"></label>
+      </div>
+      <label class="toggle"><input type="checkbox" id="rpPost"> Publish the Shorts too (uses your Posting settings and keys)</label>
+      <div class="row" style="margin-top:16px">
+        <button class="btn primary" id="rpGo">Run replay</button>
+        <button class="btn danger" id="rpCancel" style="display:none">Cancel</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Progress</h2>
+      <div id="rpStatus" class="muted">Nothing running.</div>
+    </div>
+  </div>
+</section>
+
+<!-- VIDEO IMPORT -->
+<section class="tab" id="tab-video">
+  <div class="card" style="margin-bottom:14px">
+    <h2 style="margin:0">YouTube upload watcher</h2>
+    <p class="small muted">Checks selected channels periodically and imports new uploads for review. The first check records existing uploads without processing them.
+      Enable Video for a YouTube channel in <a href="#" data-goto="settings">Settings → Channels</a>.</p>
+    <div class="small" id="vwChannels"></div><div class="small muted" id="vwQueue"></div>
+  </div>
+  <div class="grid g2">
+    <div class="card">
+      <h2>Make Shorts from a YouTube video</h2>
+      <p class="muted small">Use videos you own or have permission to clip. In Telegram review mode, you can also send links to your private bot. Clips from manual imports are sent for approval, not published automatically.</p>
+      <label class="f"><b>Video links (one per line)</b><textarea id="vodUrl" placeholder="https://www.youtube.com/watch?v=..."></textarea></label>
+      <label class="f"><b>Selection</b><select id="vodMode"><option value="auto">Find moments automatically</option><option value="manual">Use exact start and end</option></select></label>
+      <div id="vodAuto">
+        <p class="muted small">Analyzes the entire video using replay activity, audio peaks and chat if available. If no moment meets the thresholds, the manual import tries one fallback Short.</p>
+      </div>
+      <div id="vodManual" hidden>
+        <div class="grid g2">
+          <label class="f"><b>Start (seconds)</b><input type="number" id="vodFrom" min="0" step="0.1"></label>
+          <label class="f"><b>End (seconds)</b><input type="number" id="vodTo" min="0" step="0.1"></label>
+        </div>
+      </div>
+      <div class="row"><button class="btn primary" id="vodGo">Import video</button>
+        <button class="btn danger" id="vodCancel" hidden>Cancel current import</button></div>
+    </div>
+    <div class="card"><h2>Progress</h2><div id="vodStatus" class="muted">Nothing running.</div>
+      <h3>Manual import queue</h3><div id="vodQueue" class="small muted">No videos waiting.</div></div>
+  </div>
+</section>
+
+<!-- CLIPS -->
+<section class="tab" id="tab-clips">
+  <div class="row" style="margin-bottom:14px">
+    <select id="clipFilter" style="width:auto">
+      <option value="">All clips</option><option value="held">Not posted yet</option>
+      <option value="posted">Delivered</option><option value="scheduled">Scheduled</option>
+      <option value="queued">Queued (legacy)</option><option value="failed">Failed</option>
+    </select>
+    <select id="clipChannel" aria-label="Channel" style="width:auto"><option value="">All channels</option></select>
+    <select id="clipSource" aria-label="Source" style="width:auto"><option value="">All sources</option><option value="live">Live</option><option value="replay">Replay</option><option value="video">Video import</option><option value="local">Local file</option></select>
+    <select id="clipSort" aria-label="Sort" style="width:auto"><option value="recent">Newest</option><option value="quality">Best quality</option></select>
+    <select id="clipMin" aria-label="Minimum quality" style="width:auto"><option value="0">Any quality</option><option value="5">Quality 5+</option><option value="7">Quality 7+</option><option value="8">Quality 8+</option></select>
+    <select id="clipLimit" aria-label="Clips per page" style="width:auto"><option>12</option><option>24</option><option>48</option></select>
+    <input id="clipSearch" type="search" aria-label="Search clips" placeholder="Search title, hook, channel…" style="width:auto">
+    <span class="muted small" id="clipCount"></span><div class="grow"></div>
+    <button class="btn" id="openClips">Open clips folder</button>
+  </div>
+  <div class="grid g3" id="clips"></div>
+  <div class="row" style="margin-top:14px"><button class="btn" id="clipPrev">Previous</button><button class="btn" id="clipNext">Next</button></div>
+</section>
+
+<!-- MUSIC -->
+<section class="tab" id="tab-schedule">
+  <div class="row"><h2 style="margin:0">Scheduled deliveries</h2><div class="grow"></div>
+    <button class="btn" id="scheduleRefresh">Refresh</button></div>
+  <p class="small muted">Upcoming posts and phone handoffs are shown in your local time. Schedule more in Clips → Review &amp; post.</p>
+  <div id="scheduleList" class="grid g2"></div>
+</section>
+
+<!-- MUSIC -->
+<section class="tab" id="tab-music">
+  <div class="card" style="margin-bottom:14px">
+    <h2>Background music library</h2>
+    <p class="muted small" style="margin-top:-6px">Tracks are mixed softly under a Short, fade in and out, and dip whenever the
+      streamer talks. Each Short takes the track used least recently. Turn music on in <a href="#" data-goto="settings">Settings &gt; Background music</a>.
+      <b>Use royalty-free music only</b> (YouTube Audio Library, Pixabay Music, your own): copyrighted songs get Shorts claimed and Reels muted.</p>
+    <div class="row"><span class="pill" id="musicMode"></span><span class="muted small mono" id="musicFolder"></span></div>
+  </div>
+  <div class="drop" id="drop">Drop audio files here or click to choose (mp3, m4a, wav, ogg, flac; 50 MB max)
+    <input type="file" id="musicFile" accept=".mp3,.m4a,.aac,.wav,.ogg,.opus,.flac" multiple hidden></div>
+  <div class="card" style="margin-top:14px"><div id="tracks"></div></div>
+</section>
+
+<!-- SETTINGS -->
+<section class="tab" id="tab-settings">
+  <div id="setBanner"></div>
+  <div id="settingsToolbar" class="row"><button class="btn primary" id="saveCfg">Save settings</button>
+    <button class="btn" id="reloadCfg">Discard changes</button>
+    <button class="btn" id="backupsBtn" title="Every save keeps a copy of the previous settings">Backups</button><span id="saveMsg" class="small" role="status"></span>
+    <div class="grow"></div><details class="muted small"><summary>Config file</summary><span class="mono" id="cfgPath" style="overflow-wrap:anywhere"></span></details></div>
+  <div class="settings-menu" id="settingsFields">
+  <div class="card settings-tabs" id="settingsTabs" role="tablist" aria-label="Settings categories" aria-orientation="vertical">
+    <button type="button" role="tab" id="settings-tab-channels" aria-controls="settings-channels" aria-selected="true">Channels</button>
+    <button type="button" role="tab" id="settings-tab-appearance" aria-controls="settings-appearance" aria-selected="false" tabindex="-1">Look &amp; sound</button>
+    <button type="button" role="tab" id="settings-tab-ai" aria-controls="settings-ai" aria-selected="false" tabindex="-1">AI</button>
+    <button type="button" role="tab" id="settings-tab-posting" aria-controls="settings-posting" aria-selected="false" tabindex="-1">Posting</button>
+    <button type="button" role="tab" id="settings-tab-connections" aria-controls="settings-connections" aria-selected="false" tabindex="-1">Accounts &amp; keys</button>
+    <button type="button" role="tab" id="settings-tab-advanced" aria-controls="settings-advanced" aria-selected="false" tabindex="-1">Advanced Settings</button>
+  </div>
+  <section class="card settings-pane" id="settings-channels" role="tabpanel" aria-labelledby="settings-tab-channels">
+    <div class="row"><h2 style="margin:0">Channels</h2><div class="grow"></div><button class="btn" id="addChan">+ Add channel</button></div>
+    <p class="muted small">Choose Live for streams, Video for new YouTube uploads, or both. Start monitoring from the matching dashboard.</p>
+    <div id="chanList"></div>
+  </section>
+  <section class="card settings-pane" id="settings-appearance" role="tabpanel" aria-labelledby="settings-tab-appearance" hidden>
+    <h2>Look &amp; sound</h2><div id="appearanceSections"></div>
+  </section>
+  <section class="card settings-pane" id="settings-ai" role="tabpanel" aria-labelledby="settings-tab-ai" hidden>
+    <h2>AI</h2><div id="aiSections"></div>
+  </section>
+  <section class="card settings-pane" id="settings-posting" role="tabpanel" aria-labelledby="settings-tab-posting" hidden>
+    <h2>Posting</h2><div id="postingSections"></div>
+  </section>
+  <section class="card settings-pane" id="settings-advanced" role="tabpanel" aria-labelledby="settings-tab-advanced" hidden>
+    <h2>Advanced Settings</h2>
+    <p class="muted small">Expand a group to fine-tune its options.</p>
+    <div id="advancedSections"></div>
+  </section>
+  <section class="card settings-pane" id="settings-connections" role="tabpanel" aria-labelledby="settings-tab-connections" hidden>
+  <div id="acctCard">
+    <h2>Accounts &amp; keys</h2>
+    <p class="muted small">Open only the accounts you use. Save credentials here before testing the connection.</p>
+    <div>
+      <details class="net"><summary>YouTube Shorts <span class="st" id="ytState"></span></summary>
+        <details class="small muted" style="margin:8px 0"><summary>How to set it up (10 minutes, once)</summary><ol>
+          <li>Open <a href="https://console.cloud.google.com/projectcreate" target="_blank" rel="noopener">console.cloud.google.com</a>, create a project (any name).</li>
+          <li>APIs &amp; Services &gt; Library: enable <b>YouTube Data API v3</b>.</li>
+          <li>OAuth consent screen (Google Auth Platform): External, app name "ClipperHub", your email. Under <b>Audience</b>
+            press <b>Publish app</b> (in "Testing" Google signs you out every 7 days).</li>
+          <li>Clients &gt; Create client &gt; type <b>Desktop app</b>. Copy the Client ID and Client secret here, Save, then Connect.</li>
+          <li>Google will warn "app isn't verified": it is your own app, choose Advanced &gt; continue.</li></ol></details>
+        <label class="f">Client ID<input type="text" data-acct="YOUTUBE_CLIENT_ID" autocomplete="off"></label>
+        <label class="f">Client secret<input type="password" data-acct="YOUTUBE_CLIENT_SECRET" autocomplete="off"></label>
+        <div class="row" style="margin-top:8px"><button class="btn sm" data-save="YOUTUBE">Save</button>
+          <button class="btn sm primary" id="ytConnect">Connect YouTube</button>
+          <button class="btn sm" data-check="youtube">Check</button></div>
+      </details>
+      <details class="net"><summary>Instagram Reels <span class="st" id="igState"></span></summary>
+        <details class="small muted" style="margin:8px 0"><summary>How to set it up (10 minutes, once)</summary><ol>
+          <li>Your Instagram must be a <b>Creator or Business</b> account (Instagram app: Settings &gt; Account type).</li>
+          <li>Open <a href="https://developers.facebook.com/apps/creation/" target="_blank" rel="noopener">developers.facebook.com</a>, create an app (type Business, use case "Manage messaging &amp; content on Instagram").</li>
+          <li>In the app: Instagram &gt; <b>API setup with Instagram login</b> &gt; Add account (your Instagram), then <b>Generate token</b>.</li>
+          <li>Paste the token here, Save, then Check. If the token expires or is revoked, reconnect.</li>
+          <li>Each Reel is shared through a temporary private link (cloudflared) for the minute Instagram needs to fetch it.</li></ol></details>
+        <label class="f">Instagram access token<input type="password" data-acct="INSTAGRAM_ACCESS_TOKEN" autocomplete="off"></label>
+        <div class="row" style="margin-top:8px"><button class="btn sm" data-save="INSTAGRAM">Save</button>
+          <button class="btn sm" data-check="instagram">Check</button><span class="small muted" id="cfState"></span></div>
+      </details>
+      <details class="net"><summary>Telegram bot <span class="st" id="tgState"></span></summary>
+        <details class="small muted" style="margin:8px 0"><summary>How to set it up (2 minutes, once)</summary><ol>
+          <li>In Telegram, open <a href="https://t.me/BotFather" target="_blank" rel="noopener">@BotFather</a>, send <span class="mono">/newbot</span>, pick any name.</li>
+          <li>Copy the token it gives you here and Save.</li>
+          <li>Open your bot in a private Telegram chat and press <b>Start</b>. With delivery set to <b>Review in ClipperHub</b>, click <b>Connect &amp; test</b> here to link the chat.</li>
+          <li>Then you can choose <b>Review in Telegram</b> for video imports and YouTube approval. Telegram also lets you copy the TikTok caption and post it yourself.</li></ol></details>
+        <label class="f">Bot token<input type="password" data-acct="TELEGRAM_BOT_TOKEN" autocomplete="off"></label>
+        <div class="row" style="margin-top:8px"><button class="btn sm" data-save="TELEGRAM">Save</button>
+          <button class="btn sm primary" data-check="telegram">Connect &amp; test</button></div>
+      </details>
+    </div>
+  </div>
+  <details class="net">
+    <summary>API keys</summary>
+    <p class="muted small">Saved in <span class="mono">.env</span>, not the settings file. Leave a box empty to keep the current key.</p>
+    <div class="fields" id="secrets"></div>
+    <button class="btn" id="saveSecrets">Save keys</button>
+  </details>
+  </section>
+  </div>
+</section>
+
+<!-- LOG -->
+<section class="tab" id="tab-log">
+  <div class="row" style="margin-bottom:10px"><input type="text" id="logFilter" placeholder="Filter (e.g. PEAK, posted, failed, a channel name)" style="max-width:420px">
+    <label class="toggle"><input type="checkbox" id="logFollow" checked> Follow</label></div>
+  <div class="log" id="fullLog"></div>
+</section>
+</main>
+
+<dialog id="postDlg">
+  <div class="dlg-h"><b id="dlgTitle">Post</b><div class="grow"></div><button class="btn sm" onclick="postDlg.close()">Close</button></div>
+  <div class="dlg-b" id="dlgBody"></div>
+  <div class="dlg-f"><span class="muted small" id="dlgMsg" style="margin-right:auto"></span>
+    <button class="btn" id="dlgSave">Save text</button><button class="btn" id="dlgSchedule">Schedule</button>
+    <button class="btn primary" id="dlgPost">Post now</button></div>
+</dialog>
+<div class="toast" id="toast"></div>
+<dialog id="updateDialog">
+  <div class="dlg-h"><b>ClipperHub update</b></div>
+  <div class="dlg-b"><p id="updateMessage"></p><p id="updateError" class="muted small" role="status"></p></div>
+  <div class="dlg-f">
+    <button class="btn" id="updateLater">Later</button>
+    <button class="btn primary" id="updateInstall">Install now</button>
+  </div>
+</dialog>
+
+<script>
+"use strict";
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const NETS = {youtube:"YouTube", tiktok:"TikTok", instagram:"Instagram", facebook:"Facebook", x:"X", threads:"Threads", bluesky:"Bluesky"};
+
+async function api(path, opts = {}) {
+  const o = {method: opts.method || "GET", headers: {}};
+  if (o.method !== "GET") o.headers["X-Livewatch"] = "1";
+  if (opts.json !== undefined) { o.headers["Content-Type"] = "application/json"; o.body = JSON.stringify(opts.json); }
+  if (opts.body !== undefined) { o.body = opts.body; Object.assign(o.headers, opts.headers || {}); }
+  const r = await fetch(path, o);
+  let data = {};
+  try { data = await r.json(); } catch (e) {}
+  if (!r.ok) throw new Error(data.error || r.statusText);
+  return data;
+}
+function toast(msg, kind = "") {
+  const d = document.createElement("div"); d.className = kind; d.textContent = msg;
+  $("#toast").appendChild(d); setTimeout(() => d.remove(), 5000);
+}
+async function act(fn, okMsg) { try { const r = await fn(); if (okMsg) toast(okMsg, "ok"); return r; } catch (e) { toast(e.message, "bad"); } }
+
+/* ---------- tabs ---------- */
+let tab = "dash";
+function show(t) {
+  tab = t; $$("#nav button").forEach(b => b.classList.toggle("on", b.dataset.tab === t));
+  $$(".tab").forEach(s => s.classList.toggle("on", s.id === "tab-" + t));
+  $("#streamControls").hidden = t !== "dash";
+  $("#videoControls").hidden = t !== "video";
+  $("#extras").open = false;
+  if (t === "schedule") loadSchedule();
+  if (t === "clips") loadClips(); if (t === "music") loadMusic(); if (t === "settings") loadConfig();
+  if (t === "log") renderFullLog();
+}
+$("#nav").addEventListener("click", e => { if (e.target.dataset.tab) show(e.target.dataset.tab); });
+document.addEventListener("click", e => { const g = e.target.closest("[data-goto]"); if (g) { e.preventDefault(); show(g.dataset.goto); } });
+
+/* ---------- status ---------- */
+let status = null;
+$("#startBtn").onclick = () => act(() => api("/api/start", {method:"POST"}), "Watcher started");
+$("#stopBtn").onclick = async () => {
+  if (await act(() => api("/api/stop", {method:"POST"}), "Stopping: let the queue finish or click Clear queue")) tick();
+};
+$("#clearQueueBtn").onclick = async e => {
+  const button = e.currentTarget;
+  button.disabled = true;
+  try {
+    if (await act(() => api("/api/clear-queue", {method:"POST"}), "Queue cleared. The active clip can finish.")) {
+      button.hidden = true;
+      tick();
+    }
+  } finally {
+    button.disabled = false;
+  }
+};
+$("#checkBtn").onclick = () => act(() => api("/api/check", {method:"POST"}), "Checking every channel now");
+for (const [id, action] of [["vwStart","start"], ["vwStop","stop"], ["vwCheck","check"]]) {
+  $("#" + id).onclick = async () => {
+    if (await act(() => api(`/api/video/watch/${action}`, {method:"POST"}))) tick();
+  };
+}
+function renderVideoWatch(w) {
+  $("#vwState").className = "pill " + (w.stopping ? "warn" : w.running ? "ok" : "");
+  $("#vwStateText").textContent = w.stopping ? "Stopping…" : w.running ? "Watching" : "Stopped";
+  $("#vwStart").hidden = w.running;
+  $("#vwStart").disabled = !w.configured.length;
+  $("#vwStop").hidden = !w.running;
+  $("#vwStop").disabled = w.stopping;
+  $("#vwCheck").disabled = !w.running || w.stopping;
+  $("#vwChannels").innerHTML = w.configured.map(url =>
+    `<p><b>${esc(url.split("/").slice(3, -1).join("/"))}</b> — ${esc(w.running ? w.channels[url] || "Waiting" : "Stopped")}</p>`).join("")
+    || "No upload channels configured.";
+  $("#vwQueue").textContent = w.error || `${w.pending} in queue · Checks every ${w.interval}s${w.current ? " · Importing: " + w.current : ""}`;
+}
+
+function chip(label, value, kind = "") { return `<span class="pill ${kind}">${esc(label)}: <b>${esc(value)}</b></span>`; }
+function renderStatus(s) {
+  status = s;
+  const pill = $("#runpill");
+  pill.className = "pill " + (s.stopping ? "warn" : s.running ? "ok" : "");
+  pill.innerHTML = `<i class="dot"></i> ${s.stopping ? "stopping…" : s.running ? "running" : "stopped"}`;
+  $("#startBtn").style.display = s.running ? "none" : ""; $("#stopBtn").style.display = s.running ? "" : "none";
+  $("#stopBtn").disabled = s.stopping; $("#checkBtn").disabled = !s.running;
+  $("#clearQueueBtn").hidden = !s.stopping || !!s.queue_cleared;
+  let banner = "";
+  if (s.config_error) banner += `<div class="banner bad"><b>Settings problem:</b> ${esc(s.config_error)} <a href="#" data-goto="settings">Fix it</a></div>`;
+  if ((s.posting_issues || []).length) banner += `<div class="banner bad"><b>Automatic posting is on, but:</b>
+    ${s.posting_issues.map(esc).join("; ")}. <a href="#" data-goto="settings">Set up the accounts</a></div>`;
+  else if (!s.channels.length) banner += `<div class="banner info">No channels yet. <a href="#" data-goto="settings">Add the streamers you want to clip</a>, then press Start.
+    Want to see results first? Try the <a href="#" data-goto="replay">Replay test</a> on an ended YouTube stream.</div>`;
+  $("#dashBanner").innerHTML = banner;
+  $("#chips").innerHTML = [
+    chip("Encoder", s.encoder === "qsv" ? "Intel QuickSync" : "CPU (x264)"),
+    chip("AI", s.ai, s.ai === "gemini" || s.ai.startsWith("local: ") ? "ok" : "warn"),
+    chip("Delivery", s.posting ? ({top_daily:"daily top → Telegram", telegram_review:"Telegram review"}[s.delivery_mode] || "automatic")
+      : (s.posting_issues.length ? "setup needed" : "manual review"), s.posting ? "ok" : (s.posting_issues.length ? "bad" : "")),
+    chip("Captions", s.whisper, s.whisper === "missing" ? "bad" : ""),
+    chip("Music", s.music_mode === "off" ? "off" : `${s.music_mode}, ${s.music_tracks} tracks`, s.music_mode !== "off" && !s.music_tracks ? "warn" : ""),
+    chip("Disk free", s.disk_free_gb + " GB", s.disk_free_gb < 5 ? "bad" : ""),
+  ].join(" ");
+  $("#cPeaks").textContent = s.counts.peaks; $("#cClips").textContent = s.counts.clips;
+  $("#cPosted").textContent = s.counts.posted; $("#cQueue").textContent = s.queue;
+  $("#stepCard").style.display = s.current_step ? "" : "none"; $("#step").textContent = s.current_step || "";
+  renderChannels(s);
+  renderReplay(s.replay, s.video_import_queue);
+  renderVideoWatch(s.video_watch);
+}
+
+function renderChannels(s) {
+  const host = $("#chans");
+  const keys = s.channels.map(c => c.key).join("|");
+  if (host.dataset.keys !== keys) {
+    host.dataset.keys = keys;
+    host.innerHTML = s.channels.map((c, i) => `<div class="card chan" data-i="${i}">
+      <div class="top"><span class="plat ${esc(c.platform)}">${esc(c.platform)}</span>
+      <a class="name" href="${esc(c.url)}" target="_blank" rel="noopener">${esc(c.display)}</a><div class="grow"></div><span class="lp"></span></div>
+      <div class="state small"></div><div class="meta small muted"></div><div class="rec"></div></div>`).join("") ||
+      `<div class="empty card">No channels configured.</div>`;
+  }
+  s.channels.forEach((c, i) => {
+    const el = host.querySelector(`[data-i="${i}"]`); if (!el) return;
+    el.querySelector(".lp").innerHTML = c.recording ? `<span class="pill live"><i class="dot"></i> REC</span>`
+      : c.live ? `<span class="pill warn">live</span>` : `<span class="pill">offline</span>`;
+    el.querySelector(".state").textContent = c.state || "";
+    el.querySelector(".meta").textContent = c.live ? `${c.category || "?"} · ${c.title || ""}` : (c.game_filter.length ? "only while playing: " + c.game_filter.join(", ") : "");
+    const rec = el.querySelector(".rec");
+    if (!c.recording) { rec.innerHTML = ""; return; }
+    if (!rec.querySelector("canvas")) rec.innerHTML = `<div class="kv"></div><canvas width="600" height="140"></canvas>`;
+    rec.querySelector(".kv").innerHTML = `
+      <span>Quality</span><span>${esc(c.quality)}</span>
+      <span>Buffer</span><span>${Math.round(c.buffer_seconds / 60 * 10) / 10} min</span>
+      <span>Chat</span><span>${c.chat_messages == null ? "no reader (loudness only)" : c.chat_messages + " messages"}</span>
+      <span>Score</span><span><b>${c.score}</b> / ${s.threshold} (chat ${c.chat_z}, audio ${c.audio_z})${c.warming_up ? ` · learning the chat, ${c.warming_up}s left` : ""}</span>`;
+    drawSpark(rec.querySelector("canvas"), c.history || [], s.threshold);
+  });
+}
+
+function drawSpark(cv, hist, thr) {
+  const ctx = cv.getContext("2d"), W = cv.width, H = cv.height;
+  ctx.clearRect(0, 0, W, H);
+  const max = Math.max(thr * 1.4, ...hist, 1);
+  const y = v => H - 8 - (v / max) * (H - 16);
+  ctx.strokeStyle = "#f2b134"; ctx.setLineDash([6, 6]); ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(0, y(thr)); ctx.lineTo(W, y(thr)); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = "#8b94a1"; ctx.font = "20px system-ui"; ctx.fillText("clip line", 8, y(thr) - 6);
+  if (hist.length < 2) return;
+  const step = W / (180 - 1), x0 = W - (hist.length - 1) * step;
+  const grad = ctx.createLinearGradient(0, 0, 0, H); grad.addColorStop(0, "rgba(124,92,255,.45)"); grad.addColorStop(1, "rgba(124,92,255,0)");
+  ctx.beginPath(); hist.forEach((v, i) => { const X = x0 + i * step; i ? ctx.lineTo(X, y(v)) : ctx.moveTo(X, y(v)); });
+  ctx.strokeStyle = "#a48bff"; ctx.lineWidth = 3; ctx.stroke();
+  ctx.lineTo(W, H); ctx.lineTo(x0, H); ctx.closePath(); ctx.fillStyle = grad; ctx.fill();
+}
+
+/* ---------- log ---------- */
+let logSeq = 0, logBoot = null; const logLines = [];
+function cls(t) { return /PEAK/.test(t) ? "peak" : /Short ready|posted to/.test(t) ? "ready" : /fail|error|refus|dropped|behind/i.test(t) ? "err" : /LIVE/.test(t) ? "live" : ""; }
+function line(t) { return `<div class="${cls(t)}">${esc(t)}</div>`; }
+async function pollLog() {
+  try {
+    let r = await api("/api/log?since=" + logSeq);
+    if (r.boot !== logBoot) {  // the server restarted (or another data folder): start over
+      logBoot = r.boot; logLines.length = 0; logSeq = 0;
+      if (r.seq) r = await api("/api/log?since=0");
+    }
+    r.lines.forEach(l => logLines.push(l.text)); logSeq = r.seq;
+    if (logLines.length > 3000) logLines.splice(0, logLines.length - 3000);
+    if (r.lines.length) {
+      const mini = $("#miniLog"); mini.innerHTML = logLines.slice(-60).map(line).join(""); mini.scrollTop = mini.scrollHeight;
+      if (tab === "log") renderFullLog();
+      if (r.lines.some(l => /Short ready|: delivery (?:posted|partial|failed|held)/.test(l.text)) && tab === "clips") loadClips();
+      if (r.lines.some(l => /: delivery |queued post /.test(l.text)) && tab === "schedule") loadSchedule();
+    }
+  } catch (e) {}
+}
+function renderFullLog() {
+  const f = $("#logFilter").value.toLowerCase(), el = $("#fullLog");
+  el.innerHTML = logLines.filter(t => !f || t.toLowerCase().includes(f)).slice(-1500).map(line).join("");
+  if ($("#logFollow").checked) el.scrollTop = el.scrollHeight;
+}
+$("#logFilter").oninput = renderFullLog;
+
+/* ---------- replay ---------- */
+$("#rpGo").onclick = () => act(() => api("/api/replay", {method:"POST", json:{
+  url: $("#rpUrl").value.trim(), start: +$("#rpStart").value, minutes: +$("#rpMin").value,
+  max_clips: +$("#rpMax").value, post: $("#rpPost").checked}}), "Replay started");
+$("#rpCancel").onclick = e => {
+  const id = e.currentTarget.dataset.job;
+  if (id) act(() => api("/api/replay/cancel", {method:"POST", json:{id}}), "Cancelling");
+};
+$("#vodCancel").onclick = $("#rpCancel").onclick;
+$("#vodMode").onchange = () => {
+  const manual = $("#vodMode").value === "manual";
+  $("#vodAuto").hidden = manual; $("#vodManual").hidden = !manual;
+};
+$("#vodGo").onclick = async () => {
+  const input = $("#vodUrl"), submitted = input.value;
+  const urls = submitted.split(/\r?\n/).map(url => url.trim()).filter(Boolean);
+  if (!urls.length) return toast("Enter at least one YouTube video link", "bad");
+  const mode = $("#vodMode").value, json = {urls, mode};
+  if (mode === "manual") {
+    if (!$("#vodFrom").value || !$("#vodTo").value) return toast("Set the start and end in seconds", "bad");
+    Object.assign(json, {from: +$("#vodFrom").value, to: +$("#vodTo").value});
+  }
+  $("#vodGo").disabled = true;
+  try {
+    const r = await act(() => api("/api/video", {method:"POST", json}));
+    if (!r) return;
+    if (input.value === submitted) input.value = "";
+    toast(`${r.accepted} video${r.accepted === 1 ? "" : "s"} added for import`, "ok");
+  } finally {
+    $("#vodGo").disabled = false;
+  }
+};
+function renderReplay(r, queue = []) {
+  $("#rpGo").disabled = !!r?.running;
+  $("#rpCancel").style.display = r?.running && !r.video_import ? "" : "none";
+  $("#vodCancel").hidden = !(r?.running && r.video_import);
+  $("#rpCancel").dataset.job = $("#vodCancel").dataset.job = r?.id || "";
+  const wait = queue.map(job => `<li>${esc(job.url)}${job.interval ? ` (${fmt(job.interval[0])}–${fmt(job.interval[1])})` : ""}</li>`).join("");
+  $("#vodQueue").innerHTML = wait ? `<ol>${wait}</ol>` : "No videos waiting.";
+  if (!r) return;
+  const res = (r.results || []).map(x => x.file ? `<div class="ready">✓ Short at ${fmt(x.at)} — <a href="#" data-goto="clips">see it in Clips</a></div>`
+    : `<div class="err">✗ at ${fmt(x.at)}: ${esc(x.error)}</div>`).join("");
+  $(r.video_import ? "#vodStatus" : "#rpStatus").innerHTML = `
+    ${r.title ? `<div><b>${esc(r.channel)}</b> — ${esc(r.title)}</div>` : `<div>${esc(r.url)}</div>`}
+    <div style="margin:10px 0"><span class="muted">Step:</span> <b>${esc(r.step || "starting")}</b>
+      ${r.signal ? `<span class="chip">moments from: ${esc(r.signal)}</span>` : ""}</div>
+    ${r.running && /chat/.test(r.step) ? `<div class="bar"><i style="width:${Math.round(r.progress * 100)}%"></i></div>` : ""}
+    ${r.error ? `<div class="banner bad" style="margin-top:10px">${esc(r.error)}</div>` : ""}
+    <div class="log" style="height:auto;max-height:240px;margin-top:10px">${res || '<span class="muted">No Shorts yet.</span>'}</div>`;
+}
+function fmt(sec) { sec = Math.max(0, Math.round(sec)); const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60;
+  return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(s).padStart(2, "0"); }
+
+/* ---------- clips ---------- */
+let clips = [], clipPage = 1, clipRequest = 0;
+const clipPath = id => `/api/clips/${id.split("/").map(encodeURIComponent).join("/")}`;
+function clipPlayer(c, style = "") {
+  const media = `/media/${esc(encodeURI(c.id))}`;
+  const poster = `${media}/preview.jpg?v=${encodeURIComponent(c.preview_version || "")}`;
+  return `<video src="${media}/short.mp4" data-poster="${poster}" controls preload="none" playsinline${style}></video>`;
+}
+const previewObserver = new IntersectionObserver(entries => {
+  for (const {target, isIntersecting} of entries) {
+    if (!isIntersecting) continue;
+    previewObserver.unobserve(target);
+    if (target.isConnected && target.paused && target.currentTime === 0)
+      target.poster = target.dataset.poster;
+  }
+});
+function observePreviews(container) {
+  $$("video[data-poster]", container).forEach(video => previewObserver.observe(video));
+}
+let scheduleSequence = 0;
+async function loadSchedule() {
+  const seq = ++scheduleSequence;
+  const res = await act(() => api("/api/schedule"));
+  if (!res || seq !== scheduleSequence || tab !== "schedule") return;
+  const host = $("#scheduleList");
+  $$("video[data-poster]", host).forEach(video => previewObserver.unobserve(video));
+  host.innerHTML = res.entries.map(c => `<article class="card scheduled">
+    ${c.has_video ? clipPlayer(c) : `<div class="muted small">No video</div>`}
+    <div><time datetime="${esc(c.at)}">${esc(new Date(c.at).toLocaleString())}</time>
+      <p class="muted small">${esc(c.streamer)}${c.test ? " · Test only — will not publish" : c.manual ? "" : " · Legacy queue"}</p>
+      ${c.manual ? `<button class="btn sm danger" data-cancel-schedule="${esc(c.id)}"
+        data-schedule-kind="${c.test ? "test" : "delivery"}">${c.test ? "Dismiss test" : "Cancel schedule"}</button>` : ""}
+      ${Object.entries(c.posts).map(([net,p]) => `<div class="net"><b>${esc(NETS[net] || net)}</b>
+        <div>${esc(p.title)}</div><p class="small muted schedule-copy">${esc(p.description)}</p></div>`).join("")}</div></article>`).join("")
+    || `<div class="empty card">No scheduled deliveries. <a href="#" data-goto="clips">Go to Clips</a> to schedule one.</div>`;
+  observePreviews(host);
+}
+$("#scheduleRefresh").onclick = loadSchedule;
+$("#scheduleList").addEventListener("click", async e => {
+  const button = e.target.closest("[data-cancel-schedule]");
+  if (!button || button.disabled) return;
+  const path = clipPath(button.dataset.cancelSchedule);
+  const test = button.dataset.scheduleKind === "test";
+  button.disabled = true;
+  try {
+    if (await act(() => api(`${path}/${test ? "telegram-test" : "schedule"}`,
+      {method:"POST", json:test ? {clear:true} : {cancel:true}}),
+      test ? "Test removed" : "Schedule cancelled")) {
+      if (tab === "schedule") await loadSchedule();
+    }
+  } finally {
+    button.disabled = false;
+  }
+});
+function postState(c) { const p = c.posted || {}; return c.posting_now ? "posting" : c.schedule ? "scheduled" : p.status === "posting" ? "failed" : p.status || "held"; }
+async function loadClips() {
+  const seq = ++clipRequest, channel = $("#clipChannel").value;
+  const qs = new URLSearchParams({page: clipPage, limit: $("#clipLimit").value, channel,
+    source: $("#clipSource").value, state: $("#clipFilter").value, sort: $("#clipSort").value,
+    min_quality: $("#clipMin").value,
+    search: $("#clipSearch").value.trim()});
+  const r = await act(() => api(`/api/clips?${qs}`));
+  if (!r || seq !== clipRequest) return;
+  $("#clipChannel").replaceChildren(new Option("All channels", ""), ...r.channels.map(x => new Option(x, x)));
+  $("#clipChannel").value = channel;
+  $("#clipCount").textContent = `${r.total} clips · Page ${r.page} of ${r.pages}`;
+  $("#clipPrev").disabled = r.page <= 1; $("#clipNext").disabled = r.page >= r.pages;
+  clipPage = r.page;
+  // Don't replace a playing preview on a background refresh.
+  if (JSON.stringify(clips) !== JSON.stringify(r.clips) || !$("#clips").childElementCount) {
+    clips = r.clips; renderClips();
+  }
+}
+function renderClips() {
+  const done = ["posted", "partial", "queued", "scheduled"];
+  $$("#clips video[data-poster]").forEach(video => previewObserver.unobserve(video));
+  $("#clips").innerHTML = clips.map(c => {
+    const st = postState(c), t = c.text || {}, p = c.posted || {}, q = c.quality_review || {};
+    const k = done.includes(st) ? "posted" : st === "failed" ? "failed" : "held";
+    const nets = Object.entries(p.networks || {}).map(([n, r]) => {
+      const kk = ["posted", "sent to phone"].includes(r.status) ? "posted" : r.status === "failed" ? "failed" : "held";
+      const label = `${NETS[n] || n}: ${r.status}`;
+      const tip = esc(r.why || r.error || "");
+      return r.url ? `<a class="chip ${kk}" href="${esc(r.url)}" target="_blank" rel="noopener" title="${tip}">${esc(label)}</a>`
+                   : `<span class="chip ${kk}" title="${tip}">${esc(label)}</span>`;
+    }).join("");
+    return `<div class="card clip" data-id="${esc(c.id)}">
+      ${c.has_video ? clipPlayer(c) : `<div class="empty">No rendered video</div>`}
+      <div class="hook">${esc(t.hook)}</div><div class="title">${esc(t.title)}</div>
+      <div class="chips"><span class="chip ${k}">${esc(st)}${c.schedule?.at ? " " + esc(new Date(c.schedule.at).toLocaleString()) : p.at && st === "queued" ? " " + esc(new Date(p.at).toLocaleTimeString()) : ""}${p.why && !c.schedule ? ": " + esc(p.why) : ""}${p.error ? ": " + esc(p.error).slice(0, 80) : ""}</span>${nets}
+        <span class="chip">${esc(c.streamer)}</span><span class="chip">signal ${esc(c.score)}</span>
+        <span class="chip" title="${esc(q.reason)}">quality ${q.status === "ok" ? esc(q.postworthy) + "/10" : "unrated"}</span>
+        <span class="chip">hook: ${esc(t.style)}</span><span class="chip">desc: ${esc(t.description_style || "normal")}</span>
+        <span class="chip">${esc(t.source)}</span>${c.music ? `<span class="chip">♪ ${esc(c.music)}</span>` : ""}</div>
+      <div class="small muted">${new Date(c.created * 1000).toLocaleString()} · ${esc(c.duration)}s ${c.reason ? "· " + esc(c.reason) : ""}</div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn sm primary" data-act="post">Review &amp; post</button>
+        <button class="btn sm" data-act="open">Folder</button><div class="grow"></div>
+        <button class="btn sm danger" data-act="del">Delete</button></div></div>`;
+  }).join("") || `<div class="empty card">No clips match. Change the filters or make a new clip.</div>`;
+  observePreviews($("#clips"));
+}
+for (const id of ["clipFilter", "clipChannel", "clipSource", "clipSort", "clipMin", "clipLimit"]) {
+  $("#" + id).onchange = () => { clipPage = 1; loadClips(); };
+}
+let clipSearchTimer;
+$("#clipSearch").oninput = () => { clearTimeout(clipSearchTimer); clipSearchTimer = setTimeout(() => { clipPage = 1; loadClips(); }, 250); };
+$("#clipPrev").onclick = () => { clipPage--; loadClips(); };
+$("#clipNext").onclick = () => { clipPage++; loadClips(); };
+$("#openClips").onclick = () => act(() => api("/api/open", {method:"POST"}));
+$("#clips").addEventListener("click", async e => {
+  const b = e.target.closest("button[data-act]"); if (!b) return;
+  const id = b.closest(".clip").dataset.id, path = clipPath(id);
+  if (b.dataset.act === "open") act(() => api(`${path}/open`, {method:"POST"}));
+  if (b.dataset.act === "del" && confirm("Delete this clip and its files permanently? This cannot be undone.")) {
+    await act(() => api(path, {method:"DELETE"}), "Clip deleted"); loadClips();
+  }
+  if (b.dataset.act === "post") {
+    const c = await act(() => api(path)); if (c && tab === "clips" && !postDlg.open) openPost(c);
+  }
+});
+
+let dlgClip = null;
+function openPost(c) {
+  dlgClip = c; $("#dlgTitle").textContent = `${c.streamer} — ${c.text?.hook || ""}`; $("#dlgMsg").textContent = "";
+  const posts = c.posts || {};
+  const q = c.quality_review || {};
+  const date = c.schedule?.at ? new Date(c.schedule.at) : null;
+  const feedback = c.editorial_feedback ? ` (${esc(c.editorial_feedback)})` : "";
+  $("#dlgBody").innerHTML = (c.has_video ? clipPlayer(c, ' style="max-height:300px;max-width:100%"') : "") +
+    `<p class="small muted">Quality: ${q.status === "ok" ? esc(q.postworthy) + "/10" : "unrated"} — ${esc(q.reason)}</p>` +
+    (q.chat_insight ? `<p class="small muted">Chat interpretation: ${esc(q.chat_insight)}</p>` : "") +
+    (q.quote ? `<p class="small muted">Transcript evidence: ${esc(q.quote)}${q.peak_seconds == null ? "" : " · Payoff near " + fmt(q.peak_seconds)}</p>` : "") +
+    (q.titles?.length ? `<p class="small muted">Title ideas: ${q.titles.map(esc).join(" · ")}</p>` : "") +
+    (c.chat?.length ? `<p class="small muted">Chat at the moment: ${c.chat.slice(0, 8).map(esc).join(" · ")}</p>` : "") +
+    `<div class="net"><div class="row"><span class="small muted">Editorial feedback${feedback}</span>
+      <button class="btn sm" data-feedback="approve">Good moment</button>
+      <button class="btn sm" data-feedback="reject">Skip from top</button></div>
+      ${date ? `<div class="row"><span class="small muted">Scheduled: ${esc(date.toLocaleString())}</span>
+        <button class="btn sm" id="dlgCancelSchedule">Cancel schedule</button></div>` : ""}</div>` +
+    Object.keys(posts).map(p => `<div class="net" data-net="${esc(p)}">
+      <div class="row"><label class="toggle"><input type="checkbox" ${c.schedule?.platforms?.includes(p) ? "checked" : ""}> <b>${esc(NETS[p] || p)}</b></label>
+      <span class="small muted">${p === "youtube" ? "title max 100" : p === "x" ? "max 280" : ""}</span></div>
+      <label class="f" style="margin:8px 0 6px"><span class="small muted">${["x","threads","bluesky"].includes(p) ? "Post text" : "Title"}</span>
+        <input type="text" class="t" value="${esc(posts[p].title)}"></label>
+      ${["x","threads","bluesky"].includes(p) ? "" : `<label class="f" style="margin:0"><span class="small muted">${p === "youtube" ? "Description" : "Caption"}</span>
+        <textarea class="d">${esc(posts[p].description)}</textarea></label>`}</div>`).join("") ||
+    `<p class="muted">No networks in this clip's posts. Pick networks in Settings &gt; Posting for new clips.</p>`;
+  if (!postDlg.open) postDlg.showModal();
+  observePreviews($("#dlgBody"));
+}
+function dlgPosts() {
+  const out = {}, sel = [];
+  $$("#dlgBody .net[data-net]").forEach(n => { const p = n.dataset.net;
+    out[p] = {title: $(".t", n).value, description: $(".d", n)?.value || ""};
+    if ($("input[type=checkbox]", n).checked) sel.push(p); });
+  return {out, sel};
+}
+$("#dlgSave").onclick = async () => { const {out} = dlgPosts();
+  await act(() => api(`${clipPath(dlgClip.id)}/posts`, {method:"PUT", json: out}), "Text saved"); loadClips(); };
+async function submitDelivery(action) {
+  const {out, sel} = dlgPosts(); if (!sel.length) return toast("Tick at least one network", "bad");
+  const path = clipPath(dlgClip.id);
+  const buttons = ["#dlgPost", "#dlgSchedule", "#dlgSave"].map(id => $(id));
+  buttons.forEach(b => b.disabled = true);
+  try {
+    if (!await act(() => api(`${path}/posts`, {method:"PUT", json:out}))) return;
+    const r = await act(() => api(`${path}/${action}`, {method:"POST", json:{platforms:sel}}));
+    if (!r) return;
+    if (r.at) toast(`Scheduled: ${new Date(r.at).toLocaleString()}`, "ok");
+    else toast("Posting: " + Object.entries(r.routes).map(([n, v]) => `${NETS[n] || n} (${v === "phone" ? "to your phone" : v})`).join(", "), "ok");
+    (r.warnings || []).forEach(w => toast(w, "bad"));
+    postDlg.close(); setTimeout(loadClips, 800);
+  } finally {
+    buttons.forEach(b => b.disabled = false);
+  }
+}
+$("#dlgPost").onclick = () => submitDelivery("post");
+$("#dlgSchedule").onclick = () => submitDelivery("schedule");
+$("#dlgBody").addEventListener("click", async e => {
+  const b = e.target.closest("button"); if (!b || !dlgClip) return;
+  const path = clipPath(dlgClip.id);
+  if (b.dataset.feedback) {
+    await act(() => api(`${path}/feedback`, {method:"POST", json:{value:b.dataset.feedback}}), "Feedback saved");
+    loadClips();
+  } else if (b.id === "dlgCancelSchedule") {
+    if (await act(() => api(`${path}/schedule`, {method:"POST", json:{cancel:true}}), "Schedule cancelled")) {
+      postDlg.close(); loadClips();
+    }
+  }
+});
+
+/* ---------- music ---------- */
+async function loadMusic() {
+  const r = await act(() => api("/api/music")); if (!r) return;
+  $("#musicFolder").textContent = r.folder;
+  $("#musicMode").textContent = "Music: " + (status?.music_mode || "off");
+  $("#tracks").innerHTML = r.tracks.map(t => `<div class="track" data-name="${esc(t.name)}">
+    <div><b>${esc(t.name)}</b><div class="small muted">${fmt(t.duration)} · ${(t.size / 1048576).toFixed(1)} MB${t.last_used ? " · last used " + new Date(t.last_used * 1000).toLocaleString() : ""}</div></div>
+    <audio controls preload="none" src="/music/${encodeURIComponent(t.name)}"></audio>
+    <label class="toggle"><input type="checkbox" data-act="toggle" ${t.enabled ? "checked" : ""}> in rotation</label>
+    <button class="btn sm danger" data-act="del">Delete</button></div>`).join("") ||
+    `<div class="empty">No tracks yet. Free, safe sources: YouTube Audio Library, Pixabay Music.</div>`;
+}
+$("#tracks").addEventListener("click", async e => {
+  const el = e.target.closest("[data-act]"); if (!el) return;
+  const name = el.closest(".track").dataset.name, enc = encodeURIComponent(name);
+  if (el.dataset.act === "toggle") await act(() => api(`/api/music/${enc}/${el.checked ? "enable" : "disable"}`, {method:"POST"}));
+  if (el.dataset.act === "del" && confirm(`Delete ${name} from the library? The file is removed permanently.`)) {
+    await act(() => api(`/api/music/${enc}`, {method:"DELETE"}), "Track deleted"); loadMusic(); }
+});
+async function upload(files) {
+  for (const f of files) {
+    await act(() => api("/api/music", {method:"POST", body: f, headers: {"X-Filename": encodeURIComponent(f.name), "Content-Type": "application/octet-stream"}}), `Added ${f.name}`);
+  }
+  loadMusic();
+}
+const drop = $("#drop");
+drop.onclick = () => $("#musicFile").click();
+$("#musicFile").onchange = e => upload(e.target.files);
+drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+drop.ondragleave = () => drop.classList.remove("over");
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); upload(e.dataTransfer.files); };
+
+/* ---------- settings ---------- */
+const dashboardHeader = $("header"), settingsToolbar = $("#settingsToolbar"), settingsPage = $("#tab-settings");
+const settingsLayout = new ResizeObserver(() => {
+  const headerHeight = dashboardHeader.getBoundingClientRect().height;
+  settingsPage.style.setProperty("--dashboard-header-height", `${headerHeight}px`);
+  settingsPage.style.setProperty("--settings-toolbar-bottom", `${headerHeight + settingsToolbar.getBoundingClientRect().height}px`);
+});
+settingsLayout.observe(dashboardHeader);
+settingsLayout.observe(settingsToolbar);
+let cfg = null, schemaDef = null, cfgVersion = null;
+async function loadConfig() {
+  const r = await act(() => api("/api/config")); if (!r) return;
+  cfg = r.raw || {}; schemaDef = r.schema; cfgVersion = r.version; $("#cfgPath").textContent = r.path;
+  $("#saveMsg").textContent = "";
+  $("#setBanner").innerHTML = r.error ? `<div class="banner bad"><b>The saved settings have a problem:</b> ${esc(r.error)}</div>` : "";
+  renderSections(); renderChannelsEditor(); loadSecrets(); loadAccounts();
+}
+async function loadAccounts() {
+  const a = await act(() => api("/api/accounts")); if (!a) return;
+  const pill = (ok, okText, noText) => `<span class="chip ${ok ? "posted" : "held"}">${ok ? okText : noText}</span>`;
+  const via = n => a.routes[n] ? `<span class="chip">${esc(n)} via ${esc(a.routes[n])}</span>` : "";
+  $("#ytState").innerHTML = via("youtube") + pill(a.youtube.connected, "connected", a.youtube.client ? "not connected" : "not set up");
+  $("#igState").innerHTML = via("instagram") + pill(a.instagram.token, "token saved", "not set up");
+  const phoneNets = Object.entries(a.routes).filter(([, v]) => v === "phone").map(([n]) => n);
+  $("#tgState").innerHTML = (phoneNets.length ? `<span class="chip">${esc(phoneNets.join(", "))}</span>` : "") +
+    pill(a.telegram.token && a.telegram.chat, "connected", a.telegram.token ? "press Connect & test" : "not set up");
+  $("#cfState").textContent = a.cloudflared ? "" : "cloudflared is missing: winget install Cloudflare.cloudflared";
+  const s = await act(() => api("/api/secrets"));
+  if (s) $$("[data-acct]").forEach(el => { const k = el.dataset.acct;
+    el.placeholder = s[k]?.set ? "saved: " + s[k].hint : el.placeholder.replace(/^saved: .*/, ""); });
+}
+$("#acctCard").addEventListener("click", async e => {
+  const save = e.target.dataset.save, check = e.target.dataset.check;
+  if (save) {
+    const vals = {}; $$(`[data-acct^="${save}"]`).forEach(el => { if (el.value.trim()) vals[el.dataset.acct] = el.value.trim(); });
+    if (!Object.keys(vals).length) return toast("Paste the value first", "bad");
+    if (await act(() => api("/api/secrets", {method:"PUT", json: vals}), "Saved")) { $$(`[data-acct^="${save}"]`).forEach(el => el.value = ""); loadAccounts(); }
+  }
+  if (check) { const r = await act(() => api(`/api/accounts/${check}/check`, {method:"POST"})); if (r) { toast(r.message, "ok"); loadAccounts(); } }
+  if (e.target.id === "ytConnect") {
+    const r = await act(() => api("/api/accounts/youtube/connect", {method:"POST"}));
+    if (r) { window.open(r.url, "_blank"); toast("Finish the Google sign-in in the new tab, then press Check", "ok"); }
+  }
+});
+function val(sec, f) { const t = cfg[sec] || {}; return f.key in t ? t[f.key] : f.default; }
+const settingsTabs = $$("#settingsTabs [role=tab]");
+function selectSettingsTab(tab, focus = false) {
+  for (const item of settingsTabs) {
+    const active = item === tab;
+    item.setAttribute("aria-selected", String(active));
+    item.tabIndex = active ? 0 : -1;
+    $("#" + item.getAttribute("aria-controls")).hidden = !active;
+  }
+  if (focus) tab.focus();
+}
+$("#settingsTabs").addEventListener("click", e => {
+  const tab = e.target.closest("[role=tab]");
+  if (!tab) return;
+  selectSettingsTab(tab);
+  if (tab.getBoundingClientRect().top > innerHeight / 2) {
+    $("#settingsTabs").scrollIntoView({block: "start"});
+  }
+});
+$("#settingsTabs").addEventListener("keydown", e => {
+  const index = settingsTabs.indexOf(e.target), count = settingsTabs.length;
+  if (index < 0) return;
+  const target = {Home: 0, End: count - 1, ArrowLeft: (index + count - 1) % count,
+    ArrowUp: (index + count - 1) % count, ArrowRight: (index + 1) % count, ArrowDown: (index + 1) % count}[e.key];
+  if (target === undefined) return;
+  e.preventDefault();
+  selectSettingsTab(settingsTabs[target], true);
+});
+const basicFields = {
+  style: ["captions", "whisper_model", "hook", "caption_style"],
+  music: ["mode"],
+  ai: ["provider"],
+  post: ["delivery_mode", "min_gap_minutes", "platforms", "top_n", "top_min_quality", "top_time"],
+};
+const choiceLabels = {
+  platform: {twitch: "Twitch", youtube: "YouTube", kick: "Kick"},
+  caption_style: {"": "Use the app setting", ooc: "Out of context", brainrot: "Internet slang", clean: "Straightforward", rotate: "Mix all styles"},
+  description_style: {normal: "Descriptive", weird: "Playful / cryptic", rotate: "Alternate styles"},
+  whisper_model: {off: "Off (no transcript)", tiny: "Tiny (fastest)", base: "Base (balanced)", small: "Small (more accurate)",
+    medium: "Medium (slower)", "tiny.en": "Tiny (English only)", "base.en": "Base (English only)",
+    "small.en": "Small (English only)", "large-v3-turbo": "Large v3 Turbo (more resources)"},
+  provider: {local: "Local AI (Ollama)", gemini: "Google Gemini (API key)", off: "No AI (templates only)"},
+  mode: {off: "No music", quiet: "Only when there is little speech", always: "Every clip"},
+  delivery_mode: {manual: "Review in ClipperHub", telegram_review: "Review in Telegram", top_daily: "Daily TikTok shortlist", legacy: "Legacy automatic posting"},
+  youtube_via: {api: "Direct YouTube upload"}, instagram_via: {api: "Direct Instagram upload"},
+  encoder: {auto: "Automatic", qsv: "Intel Quick Sync", x264: "CPU"},
+};
+const routeLabels = {phone: "Send to Telegram (post from your phone)", "upload-post": "Use Upload-Post", off: "Disabled"};
+function fieldHtml(f, v, path) {
+  const id = "f_" + path.replace(/[^a-z0-9]/gi, "_");
+  const help = f.help ? `<span class="help">${esc(f.help)}</span>` : "";
+  let input = "";
+  if (f.type === "bool") input = `<span class="toggle"><input type="checkbox" id="${id}" data-path="${esc(path)}" data-type="bool" ${v ? "checked" : ""}> ${v ? "on" : "off"}</span>`;
+  else if (f.type === "choice") {
+    const stored = String(v ?? "");
+    const choices = f.choices.includes(stored) ? f.choices : [stored, ...f.choices];
+    input = `<select id="${id}" data-path="${esc(path)}" data-type="choice">${choices.map(c =>
+      `<option value="${esc(c)}" ${c === stored ? "selected" : ""}>${esc(
+        choiceLabels[f.key]?.[c] || (f.key.endsWith("_via") ? routeLabels[c] : null) || c || "(empty)")}</option>`).join("")}</select>`;
+  }
+  else if (f.type === "multi") return `<fieldset class="checks-group" data-setting="${esc(path)}"><legend>${esc(f.label)}</legend>
+    <div class="checks" data-path="${esc(path)}" data-type="multi">${f.choices.map(c => `<label><input type="checkbox" value="${esc(c)}" ${(v || []).includes(c) ? "checked" : ""}> ${esc(NETS[c] || c)}</label>`).join("")}</div>${help}</fieldset>`;
+  else if (f.type === "list") input = `<input type="text" id="${id}" data-path="${esc(path)}" data-type="list" value="${esc((v || []).join(", "))}">`;
+  else if (f.type === "int" || f.type === "float") input = `<input type="number" id="${id}" data-path="${esc(path)}" data-type="${f.type}" value="${esc(v)}" ${f.min != null ? `min="${f.min}"` : ""} ${f.max != null ? `max="${f.max}"` : ""} step="${f.step || (f.type === "int" ? 1 : "any")}">`;
+  else input = `<input type="text" id="${id}" data-path="${esc(path)}" data-type="text" value="${esc(v)}">`;
+  return `<label class="f" data-setting="${esc(path)}"><b>${esc(f.label)}</b>${input}${help}</label>`;
+}
+function renderSections() {
+  const fieldsHtml = (s, fields) => `<div class="fields">${fields
+    .map(f => fieldHtml(f, val(s.id, f), s.id + "." + f.key)).join("")}</div>`;
+  const basic = (s, f) => (basicFields[s.id] || []).includes(f.key);
+  const basicGroup = (id, heading = "") => {
+    const section = schemaDef.sections.find(s => s.id === id);
+    return section ? (heading ? `<h3 class="group-title">${esc(heading)}</h3>` : "") +
+      fieldsHtml(section, basicFields[id].map(key => section.fields.find(f => f.key === key)).filter(Boolean)) : "";
+  };
+  $("#appearanceSections").innerHTML = basicGroup("style", "Captions & text") +
+    '<p class="muted small" id="speechHelp" aria-live="polite" hidden></p>' + basicGroup("music", "Background music");
+  $("#aiSections").innerHTML = basicGroup("ai");
+  $("#postingSections").innerHTML = basicGroup("post") + '<p class="muted small" id="deliveryHelp" aria-live="polite"></p>';
+  const openGroups = new Set($$("#advancedSections details[open]").map(group => group.dataset.section));
+  $("#advancedSections").innerHTML = schemaDef.sections.map(s => {
+    const fields = s.fields.filter(f => !basic(s, f));
+    return fields.length ? `<details class="advanced-group" data-section="${esc(s.id)}" ${openGroups.has(s.id) ? "open" : ""}>
+      <summary>${esc(s.title)}</summary>${fieldsHtml(s, fields)}</details>` : "";
+  }).join("");
+  const userField = $('[data-setting="post.upload_post_user"]');
+  if (userField) userField.closest(".fields").insertAdjacentHTML("afterend", `<div class="net" id="upBox">
+    <div class="row"><b>Your Upload-Post profiles</b><div class="grow"></div>
+      <button class="btn sm" id="upFind" type="button">Find my profiles</button></div>
+    <div id="upList" class="small muted" style="margin-top:8px">The profile name is not your email: it is the name of a profile
+      you create on Upload-Post, which your TikTok, YouTube, Instagram… accounts are connected to.
+      Save your Upload-Post API key in <b>Accounts &amp; keys</b>, then press <b>Find my profiles</b>.</div>
+    <div class="row" style="margin-top:10px"><input type="text" id="upNew" placeholder="new profile name, e.g. gta6clips" style="flex:1">
+      <button class="btn sm" id="upCreate" type="button">Create profile</button></div></div>`);
+  for (const id of ["appearanceSections", "aiSections", "postingSections", "advancedSections"]) rememberFields($("#" + id));
+  updateSettingsVisibility();
+}
+function updateSettingsVisibility() {
+  const value = path => $(`[data-path="${path}"]`)?.value;
+  const show = (path, yes) => { const el = $(`[data-setting="${path}"]`); if (el) el.hidden = !yes; };
+  const provider = value("ai.provider"), mode = value("post.delivery_mode");
+  for (const key of ["local_url", "local_model", "local_vision_model"]) show("ai." + key, provider === "local");
+  show("ai.model", provider === "gemini");
+  for (const key of ["top_n", "top_min_quality", "top_time"]) show("post." + key, mode === "top_daily");
+  const legacy = mode === "legacy", legacyEnabled = legacy && $('[data-path="post.enabled"]')?.checked;
+  show("post.enabled", legacy);
+  show("post.daily_cap", legacyEnabled);
+  show("post.skip_spoilers", legacyEnabled || mode === "top_daily");
+  const tips = {
+    manual: "Choose clips yourself in the Clips tab. Nothing is sent for automatic approval.",
+    telegram_review: "Connect Telegram in Accounts & keys. All clips from links you submit, plus monitored clips rated 6/10 or higher, are sent for review. Approval adds the clip to YouTube Schedule; it does not post to TikTok.",
+    top_daily: "Send the best eligible clips to Telegram once a day for manual TikTok posting. Requires Local AI with a model configured. This does not schedule YouTube posts.",
+    legacy: "For existing workflows only. Enable legacy automatic posting in Advanced Settings to use it.",
+  };
+  if ($("#deliveryHelp")) $("#deliveryHelp").textContent = tips[mode] || "";
+  if ($("#speechHelp")) {
+    const showWarning = value("style.whisper_model") === "off" && $('[data-path="style.captions"]')?.checked;
+    $("#speechHelp").hidden = !showWarning;
+    $("#speechHelp").textContent = showWarning ? "Captions won't appear while speech recognition is off." : "";
+  }
+  const usesUP = ["youtube_via", "instagram_via", "others_via"].some(k => value("post." + k) === "upload-post");
+  show("post.upload_post_user", usesUP);
+  if ($("#upBox")) $("#upBox").hidden = !usesUP;
+  for (const key of ["volume_db", "folder"]) show("music." + key, value("music.mode") !== "off");
+  $$("#advancedSections [data-section]").forEach(card => {
+    card.hidden = !card.querySelector("[data-setting]:not([hidden])");
+  });
+}
+const NET_ICON = {tiktok:"TikTok", instagram:"Instagram", youtube:"YouTube", facebook:"Facebook", x:"X", threads:"Threads", bluesky:"Bluesky", linkedin:"LinkedIn"};
+async function findProfiles() {
+  const box = $("#upList"); box.textContent = "Asking Upload-Post…";
+  try {
+    const r = await api("/api/uploadpost/profiles");
+    if (!r.profiles.length) { box.innerHTML = "No profiles yet on this Upload-Post account. Create one below, then connect your socials to it."; return; }
+    const cur = $('[data-path="post.upload_post_user"]').value;
+    box.innerHTML = (cur && !r.profiles.some(p => p.username === cur)
+        ? `<div style="color:var(--amber);margin-bottom:6px">“${esc(cur)}” is not one of your profiles: posting would fail. Pick one below.</div>` : "") +
+      r.profiles.map(p => `<div class="row" style="padding:6px 0;border-top:1px solid var(--line)">
+        <b class="mono">${esc(p.username)}</b>
+        <span>${p.connected.length ? p.connected.map(n => `<span class="chip posted">${esc(NET_ICON[n] || n)}</span>`).join(" ") : '<span class="chip held">nothing connected yet</span>'}</span>
+        <div class="grow"></div>
+        <button class="btn sm" type="button" data-connect="${esc(p.username)}">Connect socials</button>
+        <button class="btn sm primary" type="button" data-use="${esc(p.username)}">${p.username === cur ? "In use ✓" : "Use this"}</button></div>`).join("");
+  } catch (e) { box.innerHTML = `<span style="color:var(--red)">${esc(e.message)}</span>`; }
+}
+$("#advancedSections").addEventListener("click", async e => {
+  if (e.target.id === "upFind") return findProfiles();
+  if (e.target.id === "upCreate") {
+    const name = $("#upNew").value.trim(); if (!name) return toast("Type a profile name first", "bad");
+    const r = await act(() => api("/api/uploadpost/profiles", {method:"POST", json:{username: name}}), `Profile ${name} created`);
+    if (r) { $('[data-path="post.upload_post_user"]').value = r.username; $("#upNew").value = ""; findProfiles();
+      toast("Now press Connect socials, then Save settings", "ok"); }
+  }
+  const use = e.target.dataset.use;
+  if (use) { $('[data-path="post.upload_post_user"]').value = use; findProfiles(); toast(`Using ${use}: press Save settings to keep it`, "ok"); }
+  const con = e.target.dataset.connect;
+  if (con) {
+    const w = window.open("", "_blank");
+    const r = await act(() => api("/api/uploadpost/connect", {method:"POST", json:{username: con}}));
+    if (r && w) w.location = r.url; else if (r) location.href = r.url; else if (w) w.close();
+  }
+});
+function renderChannelsEditor() {
+  const list = cfg.channel || [];
+  const channelBasic = ["platform", "name", "live", "video", "language"];
+  const channelField = (f, ch, i) => f.key === "video" && ch.platform !== "youtube" ? "" :
+    fieldHtml(f, f.key in ch ? ch[f.key] : f.default, `channel.${i}.${f.key}`);
+  $("#chanList").innerHTML = list.map((ch, i) => `<div class="chanrow" data-i="${i}">
+    <div class="row" style="margin-bottom:8px"><b>${esc(ch.label || ch.name || "New channel")}</b><div class="grow"></div>
+    <button class="btn sm danger" data-del="${i}">Remove</button></div>
+    <div class="grid">${schemaDef.channel.filter(f => channelBasic.includes(f.key)).map(f => channelField(f, ch, i)).join("")}</div>
+    <details class="channel-options"><summary>Advanced channel settings</summary><div class="grid">${schemaDef.channel
+      .filter(f => !channelBasic.includes(f.key) && (ch.platform !== "youtube" || f.key !== "game_filter"))
+      .map(f => channelField(f, ch, i)).join("")}</div></details></div>`).join("") ||
+    `<div class="empty">No channels. Add one to start clipping.</div>`;
+  rememberFields($("#chanList"));
+}
+function readInput(el) {
+  const t = el.dataset.type;
+  if (t === "bool") return el.checked;
+  if (t === "multi") return $$("input:checked", el).map(x => x.value);
+  if (t === "list") return el.value.split(",").map(x => x.trim().replace(/^#/, "")).filter(Boolean);
+  if (t === "int" || t === "float") return el.value === "" ? undefined : el.valueAsNumber;
+  return el.value;
+}
+const initialFields = new WeakMap();
+function rememberFields(root) {
+  $$("[data-path]", root).forEach(el => initialFields.set(el, JSON.stringify(readInput(el))));
+}
+function collect(root = $("#settingsFields")) {
+  const out = JSON.parse(JSON.stringify(cfg));
+  $$("[data-path]", root).forEach(el => {
+    const parts = el.dataset.path.split("."), v = readInput(el);
+    if (initialFields.get(el) === JSON.stringify(v)) return;
+    if (parts[0] === "channel") {
+      out.channel = out.channel || []; const ch = out.channel[+parts[1]] = out.channel[+parts[1]] || {};
+      if (v === undefined || v === null || v === "" || (Array.isArray(v) && !v.length && parts[2] !== "game_filter")) delete ch[parts[2]]; else ch[parts[2]] = v;
+    } else {
+      out[parts[0]] = out[parts[0]] || {};
+      if (v === undefined) delete out[parts[0]][parts[1]]; else out[parts[0]][parts[1]] = v;
+    }
+  });
+  return out;
+}
+$("#tab-settings").addEventListener("change", e => {
+  if (e.target.dataset.type === "bool") e.target.parentElement.lastChild.textContent = e.target.checked ? " on" : " off";
+  updateSettingsVisibility();
+});
+$("#addChan").onclick = () => { if (!cfg) return;
+  cfg.channel = collect($("#chanList")).channel || [];
+  cfg.channel.push({platform: "twitch", name: ""}); renderChannelsEditor(); };
+$("#chanList").addEventListener("click", e => { const d = e.target.dataset.del; if (d === undefined) return;
+  cfg.channel = collect($("#chanList")).channel; cfg.channel.splice(+d, 1); renderChannelsEditor(); });
+$("#chanList").addEventListener("change", e => {
+  const m = e.target.dataset.path?.match(/^channel\.(\d+)\.platform$/);
+  if (!m) return;
+  cfg.channel = collect($("#chanList")).channel;
+  if (cfg.channel[+m[1]].platform !== "youtube") delete cfg.channel[+m[1]].video;
+  renderChannelsEditor();
+});
+$("#saveCfg").onclick = async () => {
+  if (!cfg) return;
+  const invalid = $$("#settingsFields input[type=number]").find(el =>
+    el.validity.badInput || (el.dataset.type === "int" && el.value && !Number.isInteger(el.valueAsNumber)));
+  if (invalid) {
+    const panel = invalid.closest("[role=tabpanel]");
+    if (panel) selectSettingsTab($("#" + panel.getAttribute("aria-labelledby")));
+    const details = invalid.closest("details"); if (details) details.open = true;
+    invalid.focus();
+    return toast(`${invalid.closest("label").querySelector("b").textContent}: enter a valid ${invalid.dataset.type === "int" ? "whole number" : "number"}.`, "bad");
+  }
+  const raw = collect();
+  try { const r = await api("/api/config", {method:"PUT", json: {raw, version: cfgVersion}}); cfg = raw; cfgVersion = r.version;
+    $("#saveMsg").innerHTML = `<span style="color:var(--green)">Saved.</span>${r.restart_needed ? " Stop and Start the watcher to apply." : ""}`;
+    toast("Settings saved", "ok"); renderChannelsEditor(); renderSections(); loadAccounts();
+  } catch (e) { $("#saveMsg").innerHTML = `<span style="color:var(--red)">${esc(e.message)}</span>`; toast(e.message, "bad"); }
+};
+$("#reloadCfg").onclick = loadConfig;
+$("#backupsBtn").onclick = async () => {
+  const r = await act(() => api("/api/config/backups")); if (!r) return;
+  $("#dlgTitle").textContent = "Settings backups"; $("#dlgMsg").textContent = "A copy is kept before every save (last 20).";
+  $("#dlgSave").style.display = "none"; $("#dlgPost").style.display = "none"; $("#dlgSchedule").style.display = "none";
+  $("#dlgBody").innerHTML = r.backups.map(b => `<div class="net"><div class="row"><b>${new Date(b.saved * 1000).toLocaleString()}</b>
+      <div class="grow"></div><button class="btn sm" data-restore="${esc(b.name)}">Restore</button></div>
+      <div class="small muted">${b.channels.length ? esc(b.channels.join(", ")) : "no channels"}</div></div>`).join("") ||
+    `<p class="muted">No backups yet: one is made the next time settings are saved.</p>`;
+  postDlg.showModal();
+};
+$("#dlgBody").addEventListener("click", async e => {
+  const n = e.target.dataset.restore; if (!n) return;
+  if (!confirm("Replace the current settings with this backup? The current ones are backed up first.")) return;
+  const r = await act(() => api("/api/config/restore", {method:"POST", json:{name: n}}), "Settings restored");
+  if (r) { postDlg.close(); loadConfig(); }
+});
+postDlg.addEventListener("close", () => {
+  $("#dlgSave").style.display = ""; $("#dlgPost").style.display = ""; $("#dlgSchedule").style.display = "";
+  $$("#dlgBody video[data-poster]").forEach(video => previewObserver.unobserve(video));
+  $("#dlgBody").replaceChildren(); dlgClip = null;
+});
+async function loadSecrets() {
+  const s = await act(() => api("/api/secrets")); if (!s) return;
+  $("#secrets").innerHTML = schemaDef.secrets.map(f => `<label class="f"><b>${esc(f.label)}</b>
+    <input type="password" data-secret="${esc(f.key)}" placeholder="${s[f.key].set ? "set: " + esc(s[f.key].hint) : "not set"}" autocomplete="off">
+    <span class="help">${esc(f.help)} ${s[f.key].set ? `<a href="#" data-clear="${esc(f.key)}">remove</a>` : ""}</span></label>`).join("");
+}
+$("#saveSecrets").onclick = async () => {
+  const vals = {}; $$("[data-secret]").forEach(el => { if (el.value.trim()) vals[el.dataset.secret] = el.value.trim(); });
+  if (!Object.keys(vals).length) return toast("Type a key first");
+  await act(() => api("/api/secrets", {method:"PUT", json: vals}), "Keys saved"); loadSecrets();
+};
+$("#secrets").addEventListener("click", async e => { const k = e.target.dataset.clear; if (!k) return; e.preventDefault();
+  if (confirm(`Remove ${k} from .env?`)) { await act(() => api("/api/secrets", {method:"PUT", json: {[k]: ""}}), "Key removed"); loadSecrets(); } });
+
+/* ---------- loops ---------- */
+const HOW_TO_START = `Double-click <b>ClipperHub.bat</b> (or run <span class="mono">python -m clipperhub ui</span>)
+  and <b>keep that window open</b>: closing it stops the dashboard. Then open <a href="http://127.0.0.1:8765/">http://127.0.0.1:8765</a>.`;
+let offline = false;
+let offeredUpdate = null;
+const updateDialog = $("#updateDialog");
+$("#appUpdate").onclick = e => {
+  if (!offeredUpdate?.installable) return;
+  e.preventDefault();
+  $("#updateMessage").textContent = `Install v${offeredUpdate.version} and restart ClipperHub? Your saved settings, keys, clips and scheduled posts will be kept.`;
+  $("#updateInstall").dataset.version = offeredUpdate.version;
+  $("#updateError").textContent = "";
+  updateDialog.showModal();
+};
+$("#updateLater").onclick = () => updateDialog.close();
+$("#updateInstall").onclick = async e => {
+  const button = e.currentTarget;
+  button.disabled = true;
+  $("#updateError").textContent = "Downloading and verifying the update…";
+  try {
+    await api("/api/update", {method:"POST", json:{version:button.dataset.version}});
+    updateDialog.close();
+    toast("Restarting ClipperHub to apply the update…", "ok");
+  } catch (error) {
+    $("#updateError").textContent = error.message;
+  } finally {
+    button.disabled = false;
+  }
+};
+async function tick() {
+  try {
+    const state = await api("/api/status");
+    renderStatus(state);
+    const version = $("#appVersion"), link = $("#appUpdate"), release = state.release;
+    offeredUpdate = release;
+    version.textContent = `v${state.version}`;
+    version.title = release?.message || "";
+    if (release?.status === "update") {
+      link.href = release.url;
+      link.textContent = `Update available: v${release.version}`;
+      link.hidden = false;
+    } else {
+      link.hidden = true;
+      link.removeAttribute("href");
+    }
+    if (offline) { offline = false; $("#offlineBanner")?.remove(); }
+  } catch (e) {
+    $("#runpill").className = "pill bad"; $("#runpill").innerHTML = '<i class="dot"></i> server not running';
+    if (!offline) {
+      offline = true;
+      const b = document.createElement("div"); b.id = "offlineBanner"; b.className = "banner bad";
+      b.innerHTML = `<b>The ClipperHub server is not running</b>, so this page cannot load anything. ${HOW_TO_START}
+        This page reconnects by itself once it is back.`;
+      $("main").prepend(b);
+    }
+    return;
+  }
+  pollLog();
+}
+if (location.protocol === "file:") {
+  document.querySelector("main").innerHTML = `<div class="banner bad"><b>This page was opened as a file.</b>
+    It only works through the ClipperHub server. ${HOW_TO_START}</div>`;
+} else {
+  tick(); setInterval(tick, 1000);
+}
+setInterval(() => { if (tab === "clips" && clips.some(c => postState(c) === "posting")) loadClips(); }, 4000);
+</script>
+</body>
+</html>
