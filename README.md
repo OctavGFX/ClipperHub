@@ -1,60 +1,26 @@
 # ClipperHub — instalare pe Windows
 
-## 1. Instalează dependențele
+## 1. Instalează din PowerShell
 
-În PowerShell, rulează comenzile de mai jos. Dacă `winget` lipsește, instalează sau actualizează [App Installer](https://apps.microsoft.com/detail/9nblggh4nns1) din Microsoft Store.
-
-```powershell
-winget install --id Python.Python.3.12 -e
-winget install --id Gyan.FFmpeg -e
-winget install --id DenoLand.Deno -e
-winget install --id Mozilla.Firefox -e
-```
-
-FFmpeg este necesar pentru clipuri; Deno este folosit de yt-dlp pentru YouTube. Pentru streamuri YouTube, deschide Firefox și autentifică-te pe YouTube: ClipperHub citește local sesiunea Firefox, separat de autorizarea pentru publicare.
-
-## 2. Descarcă și pornește aplicația
-
-Deschide un PowerShell nou, ca să preia comenzile nou instalate. Folosește ZIP-ul **ClipperHub** atașat release-ului, nu arhiva „Source code”.
+Rulează linia de mai jos în PowerShell, fără a-l deschide ca administrator. Dacă `winget` lipsește, instalează sau actualizează [App Installer](https://apps.microsoft.com/detail/9nblggh4nns1) din Microsoft Store.
 
 ```powershell
-$release = Invoke-RestMethod 'https://api.github.com/repos/OctavGFX/ClipperHub/releases/latest'
-$asset = $release.assets | Where-Object { $_.name -like 'ClipperHub-v*.zip' } | Select-Object -First 1
-if (-not $asset) { throw 'Release-ul nu are un ZIP de instalare.' }
-$zip = Join-Path $env:TEMP $asset.name
-$app = Join-Path $env:LOCALAPPDATA 'ClipperHub'
-if (Test-Path -LiteralPath $app) { throw 'ClipperHub este deja instalat în acest folder.' }
-Invoke-WebRequest -UseBasicParsing -Uri $asset.browser_download_url -OutFile $zip
-Expand-Archive -LiteralPath $zip -DestinationPath $app
-Set-Location $app
-py -3.12 -m venv .venv
-& .\.venv\Scripts\python.exe -m pip install -r .\requirements.txt
+$setup = Join-Path $env:TEMP 'Install-ClipperHub.ps1'; Invoke-WebRequest -UseBasicParsing 'https://raw.githubusercontent.com/OctavGFX/ClipperHub/main/Install-ClipperHub.ps1' -OutFile $setup -ErrorAction Stop; powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File $setup
 ```
 
-Pentru pornire, rulează blocul de mai jos. Lasă fereastra deschisă și intră în [dashboard](http://127.0.0.1:8765/) dacă browserul nu se deschide automat.
+Poți și să consulți [scriptul de instalare](./Install-ClipperHub.ps1) înainte să îl rulezi. Comanda nu schimbă politica PowerShell a sistemului.
 
-```powershell
-Set-Location (Join-Path $env:LOCALAPPDATA 'ClipperHub')
-$env:Path = "$(Join-Path $PWD.Path '.venv\Scripts');$env:Path"
-.\ClipperHub.bat
-```
+Installerul pregătește Python, FFmpeg, Deno și Firefox dacă lipsesc, verifică SHA-256 al ZIP-ului oficial și instalează ClipperHub în `%LOCALAPPDATA%\ClipperHub`. Nu suprascrie o instalare existentă. La pornirea installerului alegi:
 
-## 3. Conectează Ollama (opțional, pentru AI local)
+- **0 / Enter:** fără AI local;
+- **1:** Ollama + `qwen3:4b-instruct` pentru text;
+- **2:** Ollama + text și `qwen3-vl:4b-instruct-q4_K_M` pentru analiză de imagine; cere mai multă memorie și spațiu.
 
-1. Rulează [installerul Ollama pentru Windows](https://ollama.com/download/windows) și pornește **Ollama** din meniul Start. Dacă serverul nu pornește, rulează `ollama serve` într-un PowerShell separat și lasă-l deschis.
-2. Într-un PowerShell nou, descarcă modelul de text. Modelul de imagine este opțional și consumă memorie suplimentară.
+Pentru opțiunile **1** și **2**, installerul descarcă modelele și configurează automat Ollama. ClipperHub pornește la final. Pentru următoarele porniri, deschide `Start-ClipperHub.cmd` din folderul instalării și lasă fereastra deschisă. Dacă browserul nu pornește automat, deschide [dashboardul](http://127.0.0.1:8765/).
 
-   ```powershell
-   ollama pull qwen3:4b-instruct
-   ollama pull qwen3-vl:4b-instruct-q4_K_M
-   ollama list
-   Invoke-RestMethod 'http://127.0.0.1:11434/api/tags'
-   ```
+## 2. Conectează doar serviciile pe care le folosești
 
-3. În **Settings → AI**, selectează **Local AI (Ollama)**. În **Advanced Settings → AI review and copy**, setează URL-ul `http://127.0.0.1:11434/v1`, modelul `qwen3:4b-instruct` și, dacă l-ai descărcat, modelul de imagine `qwen3-vl:4b-instruct-q4_K_M`. Apasă **Save settings**. Ollama local nu cere cheie API.
-
-## 4. Conectează doar serviciile pe care le folosești
-
+- **Streamuri YouTube:** autentifică-te pe YouTube în Firefox. Sesiunea de vizionare este separată de autorizarea pentru publicare.
 - **YouTube Shorts (publicare directă):** creează un proiect în [Google Cloud Console](https://console.cloud.google.com/), activează **YouTube Data API v3** și configurează **Google Auth Platform**. La **Audience → External**, dacă aplicația este în **Testing**, adaugă contul tău la **Test users**; în acest mod autorizarea expiră după 7 zile. La **Clients → Create client**, alege **Desktop app**. În ClipperHub: **Settings → Accounts & keys → YouTube Shorts**, introdu **Client ID** și **Client secret**, apoi apasă **Save → Connect YouTube**, autorizează canalul corect și apasă **Check**. Nu este suficientă o cheie API. [Proiectele fără audit YouTube pot încărca doar videoclipuri private](https://developers.google.com/youtube/v3/docs/videos/insert).
 - **Telegram:** creează un bot cu [/newbot la BotFather](https://t.me/BotFather). În **Accounts & keys → Telegram bot**, salvează tokenul. În chatul privat cu botul apasă **Start**, apoi **Connect & test** în ClipperHub. Pentru prima conectare, lasă modul de livrare pe **Review in ClipperHub**.
 - **Instagram Reels:** folosește un cont **Creator** sau **Business**. În [Meta for Developers](https://developers.facebook.com/apps/) creează o aplicație cu **Instagram API with Instagram Login**, adaugă contul și generează un token cu permisiuni de publicare. Rulează `winget install --id Cloudflare.cloudflared -e`, redeschide PowerShell și repornește ClipperHub. În **Accounts & keys → Instagram Reels**, apasă **Save → Check** după ce introduci tokenul.
